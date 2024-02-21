@@ -1,0 +1,8 @@
+# IGNORE EVERTHING
+*
+
+# EXCEPT TRACKER HOME - demo
+!.gitignore
+!demo
+!demo/**/*
+demo/db
