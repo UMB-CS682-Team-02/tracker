@@ -7,7 +7,7 @@ Load up the indicated tracker with N issues and N/100 users.
 
 from __future__ import print_function
 import sys, os, random
-sys.path.append('/Users/pratikdhameliya/Documents/roundup')
+sys.path.append('/Users/pratikdhameliya/roundup')
 from roundup import instance
 
 # open the instance
@@ -17,7 +17,7 @@ from roundup import instance
 #     sys.exit(1)
 # tracker_home = sys.argv[1]
 # N = int(sys.argv[2])
-tracker_home = '/Users/pratikdhameliya/Documents/roundup/demo'
+tracker_home = '/Users/pratikdhameliya/roundup/tracker/demo'
 N = 50
 
 # open the tracker
@@ -79,10 +79,16 @@ try:
         print('\rissue', i, '       ', end=' ')
         sys.stdout.flush()
         # in practise, about 90% of issues are resolved
-        if random.random() > .9:
-            status = random.choice(statuses)
-        else:
-            status = resolved_id
+        # if random.random() > .9:
+        #     status = random.choice(statuses)
+        # else:
+        #     status = resolved_id
+
+        #removing resolved from status so we can get more dummy data.
+        remaining_statuses = [status for status in statuses if status != resolved_id]    
+        # Select status from remaining choices
+        status = random.choice(remaining_statuses)
+    
         db.journaltag = db.user.get(random.choice(users), 'username')
         db.issue.create(
             title=random.choice(titles),

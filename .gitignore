@@ -6,3 +6,4 @@
 !demo
 !demo/**/*
 demo/db
+demo/config.ini
