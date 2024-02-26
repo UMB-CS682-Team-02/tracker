@@ -200,7 +200,7 @@ name = Roundup issue tracker
 # that is required to get to the home page of the tracker.
 # URL MUST start with http/https scheme and end with '/'
 # Default: NO DEFAULT
-web = http://localhost:8917/demo/
+web = http://localhost:8080/demo/
 
 # Email address that mail to roundup should go to.
 # If no domain is specified then mail_domain is added.
