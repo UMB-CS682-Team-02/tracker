@@ -7,18 +7,16 @@ Load up the indicated tracker with N issues and N/100 users.
 
 from __future__ import print_function
 import sys, os, random
-sys.path.append('/Users/pratikdhameliya/roundup')
 from roundup import instance
 
-# open the instance
-# if len(sys.argv) < 2:
-#     print("Error: Not enough arguments")
-#     print(__doc__.strip()%(sys.argv[0]))
-#     sys.exit(1)
-# tracker_home = sys.argv[1]
-# N = int(sys.argv[2])
-tracker_home = '/Users/pratikdhameliya/roundup/tracker/demo'
-N = 50
+#open the instance
+if len(sys.argv) < 2:
+    print("Error: Not enough arguments")
+    print(__doc__.strip()%(sys.argv[0]))
+    sys.exit(1)
+tracker_home = sys.argv[1]
+N = int(sys.argv[2])
+
 
 # open the tracker
 tracker = instance.open(tracker_home)
@@ -78,17 +76,11 @@ try:
     for i in range(N):
         print('\rissue', i, '       ', end=' ')
         sys.stdout.flush()
-        # in practise, about 90% of issues are resolved
-        # if random.random() > .9:
-        #     status = random.choice(statuses)
-        # else:
-        #     status = resolved_id
-
-        #removing resolved from status so we can get more dummy data.
-        remaining_statuses = [status for status in statuses if status != resolved_id]    
-        # Select status from remaining choices
-        status = random.choice(remaining_statuses)
-    
+        #in practise, about 20% of issues are resolved
+        if random.random() > .2:
+            status = random.choice(statuses)
+        else:
+            status = resolved_id
         db.journaltag = db.user.get(random.choice(users), 'username')
         db.issue.create(
             title=random.choice(titles),
