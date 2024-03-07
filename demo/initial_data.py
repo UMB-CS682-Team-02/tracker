@@ -18,11 +18,15 @@ stat.create(name=''"testing", order="6")
 stat.create(name=''"done-cbb", order="7")
 stat.create(name=''"resolved", order="8")
 
+#adding password for demo
+demoPassword = "demo"
+
 # create the two default users
 user = db.getclass('user')
 user.create(username="admin", password=adminpw,
     address=admin_email, roles='Admin')
 user.create(username="anonymous", roles='Anonymous')
+user.create(username="demo", address="demo@demo.com", roles='User')
 
 # add any additional database creation steps here - but only if you
 # haven't initialised the database with the admin "initialise" command
