@@ -108,7 +108,7 @@
             {'@action':'piechart'})"  i18n:translate="">Show PieChart</a>
 
 <a tal:attributes="href python:request.indexargs_url('issue',
-             {'@action':'barchart'})"  i18n:translate="">Show BarChart</a>
+             {'@template':'chart'})"  i18n:translate="">Show BarChart</a>
 
 <form method="GET" class="index-controls"
     tal:attributes="action request/classname">
