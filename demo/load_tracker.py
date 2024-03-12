@@ -7,6 +7,8 @@ Load up the indicated tracker with N issues and N/100 users.
 
 from __future__ import print_function
 import sys, os, random
+# sys.path.append('C:/Users/ashri/Documents/CS682/roundup')
+import roundup
 from roundup import instance
 
 #open the instance
