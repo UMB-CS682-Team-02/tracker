@@ -104,8 +104,9 @@
 <a tal:attributes="href python:request.indexargs_url('issue',
             {'@action':'export_csv'})" i18n:translate="">Download as CSV</a>
 
-<a tal:attributes="href python:request.indexargs_url('issue',
-            {'@action':'piechart'})"  i18n:translate="">Show PieChart</a>
+<!-- <a tal:attributes="href python:request.indexargs_url('issue',
+            {'@action':'piechart'})"  i18n:translate="">Show PieChart</a> -->
+            <a href="issue?@template=chart">Show PieChart</a>
 
 <a tal:attributes="href python:request.indexargs_url('issue',
              {'@template':'chart'})"  i18n:translate="">Show BarChart</a>

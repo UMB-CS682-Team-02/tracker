@@ -1,0 +1,44 @@
+<tal:block metal:use-macro="templates/page/macros/icing">
+<title metal:fill-slot="head_title" >
+  <span tal:omit-tag="true" i18n:translate="" >List of issues</span>
+  <span tal:condition="request/dispname"
+   tal:replace="python:' - %s '%request.dispname"
+  /> - <span tal:replace="config/TRACKER_NAME" />
+</title>
+<span metal:fill-slot="body_title" tal:omit-tag="true">
+  <span tal:omit-tag="true" i18n:translate="" >List of issues</span>
+  <span tal:condition="request/dispname"
+   tal:replace="python:' - %s' % request.dispname" />
+</span>
+<td class="content" metal:fill-slot="content">
+
+<!-- <a target="_self" tal:attributes="href python:request.indexargs_url('issue',
+            {'@action':'piechart', '@template': 'chart'})" i18n:translate="">Show PieChart</a> -->
+            
+<!-- <embed type="image/svg+xml" tal:attributes="python:utils.indexargs_url('index', {'@action': 'barchart', '@template': 'None'})" />  -->
+
+<p tal:condition="python:not (context.is_view_ok()
+ or request.user.hasRole('Anonymous'))" i18n:translate="">
+ You are not allowed to view this page.</p>
+
+<p tal:condition="python:not context.is_view_ok()
+ and request.user.hasRole('Anonymous')" i18n:translate="">
+ Please login with your username and password.</p>
+
+<tal:block tal:define="batch request/batch" tal:condition="context/is_view_ok">
+
+<!-- this is where we should render pie chart -->
+<iframe
+    id="Piechart"
+    title="PieChart"
+    width="500"
+    height="500"
+    src="http://localhost:8080/demo/issue?@action=piechart&@columns=id,activity,title,creator,assignedto,status&@sort=-activity&@group=priority&@filter=status&@pagesize=50&@startwith=0&status=-1,1,2,3,4,5,6,7">
+</iframe>
+
+</tal:block>
+
+</td>
+</tal:block><tal:comment condition=false> vim: sw=1 ts=8 et si
+</tal:comment>
+<!-- SHA: 2d63c194a3082fdd3dc97ff9a350085b2e1053d7 -->
