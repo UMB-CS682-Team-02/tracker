@@ -7,6 +7,11 @@ from roundup.anypy.strings import bs2b
 from roundup.cgi import templating
 from roundup.cgi.actions import Action
 
+from collections import defaultdict
+
+from pygal.style import Style
+
+
 import logging
 logger = logging.getLogger('extension')
 
@@ -111,6 +116,7 @@ class ChartingAction(Action):
                 else:
                     props[key] = 1
         log.append('props=%s' % props)
+        print(log)
         chart = [(k, v) for k, v in props.items()]
 
         if '@image_type' in self.form:
@@ -121,9 +127,41 @@ class ChartingAction(Action):
                 self.embedded = bool(int(self.form['@embedded']))
             except ValueError:
                 pass
-
+        print("This is chart")
+        print(chart)
         return chart
+    
+    
+    def get_sample_data_from_query(self, db, classname=None, filterspec=None,
+                        group=None, search_text=None, **other):
+        """Parse and summarize the query submitted into a data table."""
+        cl = db.getclass(classname)
+        data = defaultdict(lambda: defaultdict(int))  # Initialize defaultdict for storing data
+        
+        # Full-text search
+        if search_text:
+            matches = db.indexer.search(re.findall(r'\b\w{2,25}\b', search_text), cl)
+        else:
+            matches = None
 
+        # Iterate through issues and count occurrences of status within each title category
+        issues = cl.filter(matches, filterspec, sort=[('+', 'id')], group=group)
+        for nodeid in issues:
+            if not self.hasPermission('View', itemid=nodeid, classname=cl.classname):
+                continue
+            title_id = cl.get(nodeid, 'priority')  # Get the priority of the issue
+            status_id = cl.get(nodeid, 'status')  # Get the status of the issue
+            title = db.getclass('priority').get(title_id, 'name')  # Get the name of the priority
+            status = db.getclass('status').get(status_id, 'name')
+            data[title][status] += 1  # Increment count for the specific title and status
+
+        # Convert defaultdict to standard dictionary
+        data = dict(data)
+        for title, status_count in data.items():
+            data[title] = dict(status_count)
+        print(data)
+        return data
+    
     def plot_data(self, data, arg, chart):
         # add a link to each data point. Clicking it will filter
         # down to the issued in that slice/bar.
@@ -422,8 +460,63 @@ class BarChartAction(ChartingAction):
                              self.output_type)
 
         return bs2b(image)  # send through Client.write_html()
+    
 
+class StackedBarChartAction(ChartingAction):
+    """Generate a stacked bar chart from the result of an index query. Sum items
+       per group and stack by status.
+    """
 
+    def handle(self):
+        db = self.db
+
+        # 'arg' will contain all the data that we need to pass to
+        # the data retrieval step.
+        arg = {}
+
+        # Needed to get the query data
+        request = templating.HTMLRequest(self.client)
+
+        arg['request'] = request
+        arg['classname'] = request.classname
+
+        if request.filterspec:
+            arg['filterspec'] = request.filterspec
+
+        if request.group:
+            arg['group'] = request.group
+
+        if request.search_text:
+            arg['search_text'] = request.search_text
+
+        # Execute the query again and count grouped items
+        data = self.get_sample_data_from_query(db, **arg)
+
+        if not data:
+            raise ValueError("Failed to obtain data for graph.")
+
+        # Rearrange data structure to have statuses as keys and issue types with their counts as values
+        status_data = defaultdict(dict)
+        for issue_type, status_counts in data.items():
+            for status, count in status_counts.items():
+                status_data[status][issue_type] = count
+
+        # Create a stacked bar chart
+        chart = pygal.StackedBar()
+        chart.title = 'Stacked Bar Chart'
+
+        # Add statuses as categories and issue types with their counts as stacks
+        for status, issue_counts in status_data.items():
+            chart.add(status, issue_counts)
+
+        # Set labels for the x-axis
+        chart.x_labels = list(data.keys())
+
+        print(status_data)
+        # Render the chart and return the SVG image
+        svg_image = chart.render()
+        return bs2b(svg_image)
+ 
 def init(instance):
     instance.registerAction('piechart', PieChartAction)
-    instance.registerAction('barchart', BarChartAction)
+    instance.registerAction('barchart', StackedBarChartAction)
