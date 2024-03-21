@@ -435,6 +435,12 @@ class BarChartAction(ChartingAction):
                           )
 
         chart.nonce = self.client.client_nonce
+        print("This is data")
+        print(data)
+        print("This is arg")
+        print(arg)
+        print("This is chart")
+        print(chart)
 
         self.plot_data(data, arg, chart)
 
@@ -519,4 +525,5 @@ class StackedBarChartAction(ChartingAction):
  
 def init(instance):
     instance.registerAction('piechart', PieChartAction)
-    instance.registerAction('barchart', StackedBarChartAction)
+    instance.registerAction('barchart', BarChartAction)
+    instance.registerAction('stackedchart', StackedBarChartAction)
