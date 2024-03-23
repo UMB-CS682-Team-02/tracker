@@ -589,6 +589,130 @@ class LineChartAction(ChartingAction):
         return bs2b(image)  # send through Client.write_html()
 
 
+class DonutChartAction(ChartingAction):
+    """Generate a line chart from the result of an index query. Sum items
+       per group.
+    """
+
+    # set output image type. svg is interactive
+    output_type = "image/svg+xml"
+    # output_type = 'image/png'
+
+    def handle(self):
+        ''' Show chart for current query results
+        '''
+        db = self.db
+
+        # 'arg' will contain all the data that we need to pass to
+        # the data retrival step.
+        arg = {}
+
+        # needed to get the query data
+        request = templating.HTMLRequest(self.client)
+
+        arg['request'] = request
+
+        arg['classname'] = request.classname
+
+        if request.filterspec:
+            arg['filterspec'] = request.filterspec
+
+        if request.group:
+            # assumption is that this is a list of tuples for most
+            # cases
+            arg['group'] = request.group
+
+        if request.search_text:
+            arg['search_text'] = request.search_text
+
+        # execute the query again and count grouped items
+        # data looks like list of (grouped_label, count):
+        '''
+          data = [ ("admin", 25),
+                 ("demo", 15),
+                 ("agent", 45),
+                 ("provisional", 65),
+                 ]
+        '''
+        data = self.get_data_from_query(db, **arg)
+
+        if not data:
+            raise ValueError("Failed to obtain data for graph.")
+
+        # build image here
+
+        config = pygal.Config()
+        # Customize CSS
+        # Almost all font-* here needs to be !important. Base styles include
+        #  the #custom-chart-anchor which gives the base setting higher
+        #  specificy/priority.  I don't know how to get that value so I can
+        #  add it to the rules. I suspect with code reading I could set some
+        #  of these using pygal.style....
+
+        # make plot title larger and wrap lines
+        config.css.append('''inline:
+          g.titles text.plot_title {
+            font-size: 20px !important;
+            white-space: pre-line;
+          }''')
+        config.css.append('''inline:
+          g.legend text {
+            font-size: 8px !important;
+            white-space: pre-line;
+          }''')
+        # make background of popup label solid.
+        config.css.append('''inline:
+          g.tooltip .tooltip-box {
+            fill: #fff !important;
+          }''')
+
+        pygal.style.Style(background='transparent',
+                          plot_background='transparent')
+
+        if self.jsURL:
+            config.js[0] = self.jsURL
+
+        self.pygal_add_nonce()
+
+        chart = pygal.Pie(config,
+                          inner_radius=0.4,
+                           width=400,
+                           height=400,
+                           print_values=True,
+                           #making embedding easier
+                           disable_xml_declaration=True,
+                           )
+
+        chart.nonce = self.client.client_nonce
+        
+
+        self.plot_data(data, arg, chart)
+
+        # WARN this will break if group is not list of tuples
+        chart.title = "Tickets grouped by %s \n(%s)" % (arg['group'][0][1],
+                                                        db.config.TRACKER_NAME)
+
+        headers = self.client.additional_headers
+        headers['Content-Type'] = self.output_type
+
+        if self.output_type == 'image/svg+xml':
+            image = chart.render(is_unicode=True, pretty_print=True)
+            headers['Content-Disposition'] = 'inline; filename=pieChart.svg'
+        elif self.output_type == 'image/png':
+            image = chart.render_to_png()
+            headers['Content-Disposition'] = 'inline; filename=pieChart.png'
+            # with open('/tmp/image.png', 'rb') as infile:
+            #    image=infile.read()
+        elif self.output_type == 'data:':
+            image = chart.render_data_uri(is_unicode=True)
+        else:
+            raise ValueError("Unknown pygal output type: %s" %
+                             self.output_type)
+
+        return bs2b(image)  # send through Client.write_html()
+
+
+
 class StackedBarChartAction(ChartingAction):
     """Generate a stacked bar chart from the result of an index query. Sum items
        per group and stack by status.
