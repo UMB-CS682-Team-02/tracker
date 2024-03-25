@@ -299,8 +299,15 @@ class PieChartAction(ChartingAction):
         else:
             raise ValueError("Unknown pygal output type: %s" %
                              self.output_type)
+        
+        chart_data = {'image',bs2b(image)}
+        #print(chart_data)
 
-        return bs2b(image)  # send through Client.write_html()
+        #return bs2b(image)  # send through Client.write_html()
+        # from django.shortcuts import render
+        # return render(request,'issue.chart.html',{'image':bs2b(image)}))
+        return bs2b(image)
+    
 
 
 class BarChartAction(ChartingAction):

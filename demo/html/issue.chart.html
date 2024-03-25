@@ -15,7 +15,7 @@
 <!-- <a target="_self" tal:attributes="href python:request.indexargs_url('issue',
             {'@action':'piechart', '@template': 'chart'})" i18n:translate="">Show PieChart</a> -->
             
-<!-- <embed type="image/svg+xml" tal:attributes="python:utils.indexargs_url('index', {'@action': 'barchart', '@template': 'None'})" />  -->
+
 
 <p tal:condition="python:not (context.is_view_ok()
  or request.user.hasRole('Anonymous'))" i18n:translate="">
@@ -27,21 +27,17 @@
 
 <tal:block tal:define="batch request/batch" tal:condition="context/is_view_ok">
 
-<!-- this is where we should render pie chart -->
-<iframe
-    id="Piechart"
-    title="PieChart"
-    width="500"
-    height="500"
-    src="http://localhost:8080/demo/issue?@action=piechart&@columns=id,activity,title,creator,assignedto,status&@sort=-activity&@group=priority&@filter=status&@pagesize=50&@startwith=0&status=-1,1,2,3,4,5,6,7">
-</iframe>
-<iframe
-    id="barChart"
-    title="barChart"
-    width="500"
-    height="500"
-    src="http://localhost:8080/demo/issue?@action=barchart&@columns=id,activity,title,creator,assignedto,status&@sort=-activity&@group=priority&@filter=status&@pagesize=50&@startwith=0&status=-1,1,2,3,4,5,6,7">
-</iframe>
+<embed type="image/svg+xml" 
+tal:attributes="src python:request.indexargs_url('issue',{'@action':request.form.getvalue('@charttype','piechart')})"
+i18n:translate=""
+width="500" height="500" /> 
+
+<br>
+<span tal:content="python:request.indexargs_url('issue',{'@action':request.form.getvalue('@charttype')})"></span>
+
+<!-- <div id="chart_place_holder">
+  <img src="data:image/svg+xml;base64,{{image}}" alt="testing chart">
+</div> -->
 
 </tal:block>
 
