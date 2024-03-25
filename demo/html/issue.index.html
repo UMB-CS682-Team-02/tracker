@@ -109,7 +109,20 @@
 
 <a tal:attributes="href python:request.indexargs_url('issue',
              {'@action':'barchart'})"  i18n:translate="">Show BarChart</a>
+             <div tal:define="chart_url python:request.indexargs_url('issue', {'@action':'piechart', '@template':'chart'})">
+                <tal:block tal:condition="chart_url">
+                  <object tal:attributes="data chart_url" type="image/svg+xml">
+                    <!-- This will display the SVG content if the URL is generated successfully -->
+                    <p>Unable to load SVG content.</p>
+                  </object>
+                </tal:block>
+                <tal:block tal:condition="not:chart_url">
+                  <!-- This will be rendered if chart_url is not generated successfully -->
+                  <p>Failed to generate the chart URL.</p>
+                </tal:block>
+              </div>
 
+	     
 <form method="GET" class="index-controls"
     tal:attributes="action request/classname">
 
