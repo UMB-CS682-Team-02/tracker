@@ -102,25 +102,15 @@
 </table>
 
 <a tal:attributes="href python:request.indexargs_url('issue',
-            {'@action':'export_csv'})" i18n:translate="">Download as CSV</a>
+            {'@action':'export_csv'})" i18n:translate="">Download as CSV</a> &nbsp;
 
-&nbsp;
-    <a tal:attributes="href python:request.indexargs_url('issue',
-    {'@template':'chart','@charttype':'piechart'})"  i18n:translate="">Show PieChart</a>
 
-&nbsp;
-<!-- <a tal:attributes="href python:request.indexargs_url('issue',
-            {'@action':'piechart'})"  i18n:translate="">Show PieChart</a> -->
-            <!-- <a href="issue?@template=chart">Show barChart</a> -->
+<a tal:attributes="href python:request.indexargs_url('issue',
+    {'@template':'chart','@charttype':'piechart'})"  i18n:translate="">Show PieChart</a> &nbsp;
     
-    <a tal:attributes="href python:request.indexargs_url('issue',
+<a tal:attributes="href python:request.indexargs_url('issue',
     {'@template':'chart','@charttype':'barchart'})"  i18n:translate="">Show BarChart</a>
 
-<br>
-<span tal:content="python:request.indexargs_url('issue',{'@template':'chart','@charttype':'barchart'})"></span>
-
-<br>
-<span tal:content="python:request.indexargs_url('issue',{'@action':'piechart'})"></span>
 
 <form method="GET" class="index-controls"
     tal:attributes="action request/classname">

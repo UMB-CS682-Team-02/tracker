@@ -12,11 +12,6 @@
 </span>
 <td class="content" metal:fill-slot="content">
 
-<!-- <a target="_self" tal:attributes="href python:request.indexargs_url('issue',
-            {'@action':'piechart', '@template': 'chart'})" i18n:translate="">Show PieChart</a> -->
-            
-
-
 <p tal:condition="python:not (context.is_view_ok()
  or request.user.hasRole('Anonymous'))" i18n:translate="">
  You are not allowed to view this page.</p>
@@ -30,14 +25,7 @@
 <embed type="image/svg+xml" 
 tal:attributes="src python:request.indexargs_url('issue',{'@action':request.form.getvalue('@charttype','piechart')})"
 i18n:translate=""
-width="500" height="500" /> 
-
-<br>
-<span tal:content="python:request.indexargs_url('issue',{'@action':request.form.getvalue('@charttype')})"></span>
-
-<!-- <div id="chart_place_holder">
-  <img src="data:image/svg+xml;base64,{{image}}" alt="testing chart">
-</div> -->
+width="1000" height="550" /> 
 
 </tal:block>
 
