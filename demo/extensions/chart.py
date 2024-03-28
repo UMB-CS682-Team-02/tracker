@@ -116,7 +116,6 @@ class ChartingAction(Action):
                 else:
                     props[key] = 1
         log.append('props=%s' % props)
-        print(log)
         chart = [(k, v) for k, v in props.items()]
 
         if '@image_type' in self.form:
@@ -127,8 +126,6 @@ class ChartingAction(Action):
                 self.embedded = bool(int(self.form['@embedded']))
             except ValueError:
                 pass
-        print("This is chart")
-        print(chart)
         return chart
     
     
@@ -159,7 +156,6 @@ class ChartingAction(Action):
         data = dict(data)
         for title, status_count in data.items():
             data[title] = dict(status_count)
-        print(data)
         return data
     
     def plot_data(self, data, arg, chart):
@@ -189,6 +185,22 @@ class ChartingAction(Action):
             chart.add(d[0], [{'value': d[1], 'xlink': xlink}])
 
         return
+    
+    def plot_data_for_Stackedbar_Chart(self, data, arg, chart):
+
+        # Rearrange data structure to have statuses as keys and issue types with their counts as values
+        status_data = defaultdict(dict)
+        for issue_type, status_counts in data.items():
+            for status, count in status_counts.items():
+                status_data[status][issue_type] = count
+
+        
+        # Add statuses as categories and issue types with their counts as stacks
+        for status, issue_counts in status_data.items():
+            chart.add(status, issue_counts)
+        
+        return
+
 
     def pygal_add_nonce(self):
         """Modify the pygal style and script methods to add a nonce
@@ -435,13 +447,6 @@ class BarChartAction(ChartingAction):
                           )
 
         chart.nonce = self.client.client_nonce
-        print("This is data")
-        print(data)
-        print("This is arg")
-        print(arg)
-        print("This is chart")
-        print(chart)
-
         self.plot_data(data, arg, chart)
 
         # WARN this will break if group is not list of tuples
@@ -473,7 +478,13 @@ class StackedBarChartAction(ChartingAction):
        per group and stack by status.
     """
 
+    # set output image type. svg is interactive
+    output_type = "image/svg+xml"
+    # output_type = 'image/png'
+
     def handle(self):
+        ''' Show chart for current query results
+        '''
         db = self.db
 
         # 'arg' will contain all the data that we need to pass to
@@ -494,6 +505,7 @@ class StackedBarChartAction(ChartingAction):
 
         if request.search_text:
             arg['search_text'] = request.search_text
+        
 
         # Execute the query again and count grouped items
         data = self.get_sample_data_from_query(db, **arg)
@@ -501,27 +513,66 @@ class StackedBarChartAction(ChartingAction):
         if not data:
             raise ValueError("Failed to obtain data for graph.")
 
-        # Rearrange data structure to have statuses as keys and issue types with their counts as values
-        status_data = defaultdict(dict)
-        for issue_type, status_counts in data.items():
-            for status, count in status_counts.items():
-                status_data[status][issue_type] = count
+        # build image here
 
-        # Create a stacked bar chart
-        chart = pygal.StackedBar()
-        chart.title = 'Stacked Bar Chart'
+        config = pygal.Config()
+        # Customize CSS
+        # Almost all font-* here needs to be !important. Base styles include
+        #  the #custom-chart-anchor which gives the base setting higher
+        #  specificy/priority.  I don't know how to get that value so I can
+        #  add it to the rules. I suspect with code reading I could set some
+        #  of these using pygal.style....
 
-        # Add statuses as categories and issue types with their counts as stacks
-        for status, issue_counts in status_data.items():
-            chart.add(status, issue_counts)
+        # make plot title larger and wrap lines
+        config.css.append('''inline:
+          g.titles text.plot_title {
+            font-size: 20px !important;
+            white-space: pre-line;
+          }''')
+        config.css.append('''inline:
+          g.legend text {
+            font-size: 8px !important;
+            white-space: pre-line;
+          }''')
+        # make background of popup label solid.
+        config.css.append('''inline:
+          g.tooltip .tooltip-box {
+            fill: #fff !important;
+          }''')
+        
+        pygal.style.Style(background='transparent',
+                          plot_background='transparent')
+
+        if self.jsURL:
+            config.js[0] = self.jsURL
+
+        self.pygal_add_nonce()
+        
+        chart = pygal.StackedBar(config,
+                          width=400,
+                          height=400,
+                          print_values=True,
+                          # make embedding easier
+                          disable_xml_declaration=True,
+                          )
+        
+        chart.nonce = self.client.client_nonce
+        self.plot_data_for_Stackedbar_Chart(data, arg, chart)
+
+        # Give a title 
+        chart.title = "Tickets grouped by Priority and Status"
+
+        headers = self.client.additional_headers
+        headers['Content-Type'] = self.output_type
 
         # Set labels for the x-axis
         chart.x_labels = list(data.keys())
 
-        print(status_data)
         # Render the chart and return the SVG image
-        svg_image = chart.render()
-        return bs2b(svg_image)
+        image = chart.render()
+        #headers['Content-Disposition'] = 'inline; filename=stackedChart.svg'
+
+        return bs2b(image)
  
 def init(instance):
     instance.registerAction('piechart', PieChartAction)
