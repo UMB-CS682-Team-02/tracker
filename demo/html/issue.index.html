@@ -112,6 +112,9 @@
     {'@template':'chart','@charttype':'barchart'})"  i18n:translate="">Show BarChart</a>
 
 
+<a tal:attributes="href python:request.indexargs_url('issue',
+             {'@action':'stackedchart'})"  i18n:translate="">Show Stacked Barchart</a>
+
 <form method="GET" class="index-controls"
     tal:attributes="action request/classname">
 
