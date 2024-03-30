@@ -1,3 +1,27 @@
+Running the following commands in the terminal would help you to launch the
+demo tracker we have been working on.
+
+1) Create a Folder where you want to store the code and open terminal.
+
+2) Cloning the Roundup code: 
+hg clone http://hg.code.sf.net/p/roundup/code roundup
+
+3) Opening Roundup Project on VSCode:
+code roundup
+
+4) Cloning the demo tracker(which we are currently working on) from the git repository of our team: 
+git clone https://github.com/UMB-CS682-Team-02/tracker.git
+
+5) Install pygal if not already installed:
+pip install pygal
+
+6) Rename the config.ini.sample file to config.ini which is located in tracker/demo.
+
+7) initializing the roundup_admin script which will initialize the admin and demo user:
+python roundup/scripts/roundup_admin.py demo init
+
+8) To load the tracker with dummy data :
+
 Setting PYTHONPATH
 ==================
 
@@ -39,3 +63,9 @@ python load_tracker.py /path/to/demo_directory 1000
 
 Replace '/path/to/demo_directory' with the actual path to the demo directory containing the load_tracker.py file, 
 and '1000' with the desired number of data records to generate.
+
+9) To run the demo tracker in the localhost:
+python roundup/scripts/roundup_server.py demo=tracker\demo
+
+After running this in the terminal - paste http://localhost:8080/demo/ in the browser to run
+the demo tracker

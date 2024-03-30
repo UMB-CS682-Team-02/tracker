@@ -7,6 +7,11 @@ from roundup.anypy.strings import bs2b
 from roundup.cgi import templating
 from roundup.cgi.actions import Action
 
+from collections import defaultdict
+
+from pygal.style import Style
+
+
 import logging
 logger = logging.getLogger('extension')
 
@@ -121,9 +126,38 @@ class ChartingAction(Action):
                 self.embedded = bool(int(self.form['@embedded']))
             except ValueError:
                 pass
-
         return chart
+    
+    
+    def get_sample_data_from_query(self, db, classname=None, filterspec=None,
+                        group=None, search_text=None, **other):
+        """Parse and summarize the query submitted into a data table."""
+        cl = db.getclass(classname)
+        data = defaultdict(lambda: defaultdict(int))  # Initialize defaultdict for storing data
+        
+        # Full-text search
+        if search_text:
+            matches = db.indexer.search(re.findall(r'\b\w{2,25}\b', search_text), cl)
+        else:
+            matches = None
 
+        # Iterate through issues and count occurrences of status within each title category
+        issues = cl.filter(matches, filterspec, sort=[('+', 'id')], group=group)
+        for nodeid in issues:
+            if not self.hasPermission('View', itemid=nodeid, classname=cl.classname):
+                continue
+            title_id = cl.get(nodeid, 'priority')  # Get the priority of the issue
+            status_id = cl.get(nodeid, 'status')  # Get the status of the issue
+            title = db.getclass('priority').get(title_id, 'name')  # Get the name of the priority
+            status = db.getclass('status').get(status_id, 'name')
+            data[title][status] += 1  # Increment count for the specific title and status
+
+        # Convert defaultdict to standard dictionary
+        data = dict(data)
+        for title, status_count in data.items():
+            data[title] = dict(status_count)
+        return data
+    
     def plot_data(self, data, arg, chart):
         # add a link to each data point. Clicking it will filter
         # down to the issued in that slice/bar.
@@ -151,6 +185,22 @@ class ChartingAction(Action):
             chart.add(d[0], [{'value': d[1], 'xlink': xlink}])
 
         return
+    
+    def plot_data_for_Stackedbar_Chart(self, data, arg, chart):
+
+        # Rearrange data structure to have statuses as keys and issue types with their counts as values
+        status_data = defaultdict(dict)
+        for issue_type, status_counts in data.items():
+            for status, count in status_counts.items():
+                status_data[status][issue_type] = count
+
+        
+        # Add statuses as categories and issue types with their counts as stacks
+        for status, issue_counts in status_data.items():
+            chart.add(status, issue_counts)
+        
+        return
+
 
     def pygal_add_nonce(self):
         """Modify the pygal style and script methods to add a nonce
@@ -299,8 +349,15 @@ class PieChartAction(ChartingAction):
         else:
             raise ValueError("Unknown pygal output type: %s" %
                              self.output_type)
+        
+        chart_data = {'image',bs2b(image)}
+        #print(chart_data)
 
-        return bs2b(image)  # send through Client.write_html()
+        #return bs2b(image)  # send through Client.write_html()
+        # from django.shortcuts import render
+        # return render(request,'issue.chart.html',{'image':bs2b(image)}))
+        return bs2b(image)
+    
 
 
 class BarChartAction(ChartingAction):
@@ -397,7 +454,6 @@ class BarChartAction(ChartingAction):
                           )
 
         chart.nonce = self.client.client_nonce
-
         self.plot_data(data, arg, chart)
 
         # WARN this will break if group is not list of tuples
@@ -422,8 +478,110 @@ class BarChartAction(ChartingAction):
                              self.output_type)
 
         return bs2b(image)  # send through Client.write_html()
+    
 
+class StackedBarChartAction(ChartingAction):
+    """Generate a stacked bar chart from the result of an index query. Sum items
+       per group and stack by status.
+    """
 
+    # set output image type. svg is interactive
+    output_type = "image/svg+xml"
+    # output_type = 'image/png'
+
+    def handle(self):
+        ''' Show chart for current query results
+        '''
+        db = self.db
+
+        # 'arg' will contain all the data that we need to pass to
+        # the data retrieval step.
+        arg = {}
+
+        # Needed to get the query data
+        request = templating.HTMLRequest(self.client)
+
+        arg['request'] = request
+        arg['classname'] = request.classname
+
+        if request.filterspec:
+            arg['filterspec'] = request.filterspec
+
+        if request.group:
+            arg['group'] = request.group
+
+        if request.search_text:
+            arg['search_text'] = request.search_text
+        
+
+        # Execute the query again and count grouped items
+        data = self.get_sample_data_from_query(db, **arg)
+
+        if not data:
+            raise ValueError("Failed to obtain data for graph.")
+
+        # build image here
+
+        config = pygal.Config()
+        # Customize CSS
+        # Almost all font-* here needs to be !important. Base styles include
+        #  the #custom-chart-anchor which gives the base setting higher
+        #  specificy/priority.  I don't know how to get that value so I can
+        #  add it to the rules. I suspect with code reading I could set some
+        #  of these using pygal.style....
+
+        # make plot title larger and wrap lines
+        config.css.append('''inline:
+          g.titles text.plot_title {
+            font-size: 20px !important;
+            white-space: pre-line;
+          }''')
+        config.css.append('''inline:
+          g.legend text {
+            font-size: 8px !important;
+            white-space: pre-line;
+          }''')
+        # make background of popup label solid.
+        config.css.append('''inline:
+          g.tooltip .tooltip-box {
+            fill: #fff !important;
+          }''')
+        
+        pygal.style.Style(background='transparent',
+                          plot_background='transparent')
+
+        if self.jsURL:
+            config.js[0] = self.jsURL
+
+        self.pygal_add_nonce()
+        
+        chart = pygal.StackedBar(config,
+                          width=400,
+                          height=400,
+                          print_values=True,
+                          # make embedding easier
+                          disable_xml_declaration=True,
+                          )
+        
+        chart.nonce = self.client.client_nonce
+        self.plot_data_for_Stackedbar_Chart(data, arg, chart)
+
+        # Give a title 
+        chart.title = "Tickets grouped by Priority and Status"
+
+        headers = self.client.additional_headers
+        headers['Content-Type'] = self.output_type
+
+        # Set labels for the x-axis
+        chart.x_labels = list(data.keys())
+
+        # Render the chart and return the SVG image
+        image = chart.render()
+        #headers['Content-Disposition'] = 'inline; filename=stackedChart.svg'
+
+        return bs2b(image)
+ 
 def init(instance):
     instance.registerAction('piechart', PieChartAction)
     instance.registerAction('barchart', BarChartAction)
+    instance.registerAction('stackedchart', StackedBarChartAction)
