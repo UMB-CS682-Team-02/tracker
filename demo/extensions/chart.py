@@ -437,7 +437,7 @@ class BarChartAction(ChartingAction):
             fill: #fff !important;
           }''')
 
-        pygal.style.Style(background='transparent',
+        cstyle_barchart=pygal.style.Style(background='transparent',
                           plot_background='transparent')
 
         if self.jsURL:
@@ -447,7 +447,8 @@ class BarChartAction(ChartingAction):
 
         chart = pygal.Bar(config,
                           width=400,
-                          height=400,
+                          height=400, 
+                          style=cstyle_barchart,
                           print_values=True,
                           # make embedding easier
                           disable_xml_declaration=True,
