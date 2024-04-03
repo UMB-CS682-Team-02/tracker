@@ -187,26 +187,10 @@ class ChartingAction(Action):
         return
     
     def plot_data_for_Stackedbar_Chart(self, data, arg, chart):
-<<<<<<< HEAD
-
-=======
->>>>>>> test_stackedchart
         # Rearrange data structure to have statuses as keys and issue types with their counts as values
         status_data = defaultdict(dict)
         for issue_type, status_counts in data.items():
             for status, count in status_counts.items():
-<<<<<<< HEAD
-                status_data[status][issue_type] = count
-
-        
-        # Add statuses as categories and issue types with their counts as stacks
-        for status, issue_counts in status_data.items():
-            chart.add(status, issue_counts)
-        
-        return
-
-
-=======
                 status_data[status][issue_type] = count        
         # Add statuses as categories and issue types with their counts as stacks
         for status, issue_counts in status_data.items():
@@ -214,7 +198,6 @@ class ChartingAction(Action):
         return
         
     
->>>>>>> test_stackedchart
     def pygal_add_nonce(self):
         """Modify the pygal style and script methods to add a nonce
            so it will work under a CSP.
@@ -492,8 +475,6 @@ class BarChartAction(ChartingAction):
 
         return bs2b(image)  # send through Client.write_html()
     
-<<<<<<< HEAD
-=======
     
 class StackedBarChartAction(ChartingAction):
     """Generate a stacked bar chart from the result of an index query. Sum items
@@ -695,14 +676,12 @@ class MultiBarChartAction(ChartingAction):
         image = chart.render()
 
         return bs2b(image)
->>>>>>> test_stackedchart
 
 class StackedBarChartAction(ChartingAction):
     """Generate a stacked bar chart from the result of an index query. Sum items
        per group and stack by status.
     """
 
-<<<<<<< HEAD
     # set output image type. svg is interactive
     output_type = "image/svg+xml"
     # output_type = 'image/png'
@@ -798,14 +777,9 @@ class StackedBarChartAction(ChartingAction):
         #headers['Content-Disposition'] = 'inline; filename=stackedChart.svg'
 
         return bs2b(image)
-=======
->>>>>>> test_stackedchart
  
 def init(instance):
     instance.registerAction('piechart', PieChartAction)
     instance.registerAction('barchart', BarChartAction)
     instance.registerAction('stackedchart', StackedBarChartAction)
-<<<<<<< HEAD
-=======
     instance.registerAction('multibarchart', MultiBarChartAction)
->>>>>>> test_stackedchart
