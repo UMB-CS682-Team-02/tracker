@@ -174,7 +174,7 @@ class ChartingAction(Action):
         # generate a new @filter value adding the gprop
         filter = ','.join(current_filter + [gprop])
         for d in data:
-            xlink = {'target': '_blank',
+            xlink = {'target': '_parent',
                      'href': current_url +
                      "&@filter=%(filter)s&%(gprop)s=%(gval)s" % {
                          'gprop': gprop,
