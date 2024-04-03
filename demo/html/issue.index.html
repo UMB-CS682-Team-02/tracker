@@ -109,11 +109,13 @@
     {'@template':'chart','@charttype':'piechart'})"  i18n:translate="">Show PieChart</a> &nbsp;
     
 <a tal:attributes="href python:request.indexargs_url('issue',
-    {'@template':'chart','@charttype':'barchart'})"  i18n:translate="">Show BarChart</a>
-
+    {'@template':'chart','@charttype':'barchart'})"  i18n:translate="">Show BarChart</a> &nbsp;
 
 <a tal:attributes="href python:request.indexargs_url('issue',
-             {'@action':'stackedchart'})"  i18n:translate="">Show Stacked Barchart</a>
+    {'@template':'chart','@charttype':'stackedchart'})"  i18n:translate="">Show Stacked Barchart</a> &nbsp;
+
+<a tal:attributes="href python:request.indexargs_url('issue',
+    {'@template':'chart','@charttype':'multibarchart'})"  i18n:translate="">Show MultiBarchart</a>
 
 <form method="GET" class="index-controls"
     tal:attributes="action request/classname">
