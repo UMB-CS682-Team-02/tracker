@@ -664,7 +664,7 @@ class StackedBarChartAction(ChartingAction):
         chart = pygal.StackedBar(config,
                           width=400,
                           height=400,
-                          print_values=True,
+                          print_values=False,
                           # make embedding easier
                           disable_xml_declaration=True,
                           )
@@ -765,7 +765,7 @@ class MultiBarChartAction(ChartingAction):
         chart = pygal.Bar(config,
                           width=500,
                           height=400,
-                          print_values=True,
+                          print_values=False,
                           # make embedding easier
                           disable_xml_declaration=True,
                           )
