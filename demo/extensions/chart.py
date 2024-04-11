@@ -256,6 +256,9 @@ class PieChartAction(ChartingAction):
         if request.search_text:
             arg['search_text'] = request.search_text
 
+        if request.sort:
+            arg['sort'] = request.sort
+
         # execute the query again and count grouped items
         # data looks like list of (grouped_label, count):
         '''
@@ -270,8 +273,14 @@ class PieChartAction(ChartingAction):
         if not data:
             raise ValueError("Failed to obtain data for graph.")
 
-        # For Pie chart, sort by count. Largest first.
-        data.sort(key=lambda i: i[1], reverse=True)
+        # For Pie chart, Sorting by ascending or descending(Given by user)
+        sort_param = arg.get('sort')
+        if '-' in sort_param[0]:
+            data.sort(key=lambda i: i[1], reverse=True)
+        else:
+            data.sort(key=lambda i: i[1])
+        
+
 
         # build image here
 
