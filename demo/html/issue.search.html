@@ -64,6 +64,16 @@
   <td metal:use-macro="group_input"></td>
 </tr>
 
+<tr tal:define="name string:private;
+                           field context/private;"
+    tal:condition="db/issue/is_view_ok">
+  <th i18n:translate="">Private Status:</th>
+  <td></td>
+  <td metal:use-macro="column_input"></td>
+  <td metal:use-macro="sort_input"></td>
+  <td metal:use-macro="group_input"></td>
+</tr>
+
 <tr tal:define="name string:id">
   <th i18n:translate="">ID:</th>
   <td metal:use-macro="search_input"></td>
