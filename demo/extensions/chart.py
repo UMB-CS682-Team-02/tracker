@@ -69,52 +69,74 @@ class ChartingAction(Action):
                 'a valid property\n' % property)
 
         if not isinstance(prop_type, hyperdb.Link) \
-           and not isinstance(prop_type, hyperdb.Multilink):
+           and not isinstance(prop_type, hyperdb.Multilink) \
+            and not isinstance(prop_type, hyperdb.Boolean):
             raise ValueError(
                 'Charts can only be created on '
                 'linked group properties! %s is not '
                 'a linked property\n' % property)
             return
-
-        klass = db.getclass(prop_type.classname)
-        log.append('klass=%s' % klass)
-
-        # build a property dict, eg: { 'new':1, 'assigned':2 }
-        # in
-        # case of status
-        props = {}
-
+        
+        
         if not filterspec:
-            filterspec = {}
+           filterspec = {}
 
         issues = cl.filter(matches, filterspec, sort=[('+', 'id')],
-                           group=group)
+                       group=group)
 
         log.append('issues=%s' % issues)
-        for nodeid in issues:
-            if not self.hasPermission('View', itemid=nodeid,
-                                      classname=cl.classname):
-                continue
-            prop_ids = cl.get(nodeid, property)
-            if prop_ids:
-                if not isinstance(prop_ids, type([])):
-                    prop_ids = [prop_ids]
-                for id in prop_ids:
-                    prop = klass.get(id, klass.labelprop())
+
+        if isinstance(prop_type, hyperdb.Boolean):
+            props = {'True': 0, 'False': 0, 'Not Set': 0}
+
+            for nodeid in issues:
+                if not self.hasPermission('View', itemid=nodeid,
+                                          classname=cl.classname):
+                    continue
+                prop_value = cl.get(nodeid, property)
+                if prop_value == 1:
+                    props['True'] += 1
+                elif prop_value == 0:
+                    props['False'] += 1
+                else:
+                    props['Not Set'] += 1
+
+
+        else:
+            klass = db.getclass(prop_type.classname)
+            log.append('klass=%s' % klass)
+
+            # build a property dict, eg: { 'new':1, 'assigned':2 }
+            # in
+            # case of status
+            props = {}
+
+            for nodeid in issues:
+                if not self.hasPermission('View', itemid=nodeid,
+                                          classname=cl.classname):
+                    continue
+                prop_ids = cl.get(nodeid, property)
+                if prop_ids:
+                    if not isinstance(prop_ids, type([])):
+                        prop_ids = [prop_ids]
+                    for id in prop_ids:
+                        prop = klass.get(id, klass.labelprop())
+                        key = prop.replace('/', '-')
+                        if key in props:
+                            props[key] += 1
+                        else:
+                            props[key] = 1
+                else:
+                    prop = 'Unassigned'
+                    if prop not in props:
+                        props[prop] = 0
                     key = prop.replace('/', '-')
                     if key in props:
                         props[key] += 1
                     else:
                         props[key] = 1
-            else:
-                prop = 'Unassigned'
-                if prop not in props:
-                    props[prop] = 0
-                key = prop.replace('/', '-')
-                if key in props:
-                    props[key] += 1
-                else:
-                    props[key] = 1
+
+        
         log.append('props=%s' % props)
         chart = [(k, v) for k, v in props.items()]
 
@@ -256,6 +278,9 @@ class PieChartAction(ChartingAction):
         if request.search_text:
             arg['search_text'] = request.search_text
 
+        if request.sort:
+            arg['sort'] = request.sort
+
         # execute the query again and count grouped items
         # data looks like list of (grouped_label, count):
         '''
@@ -270,8 +295,14 @@ class PieChartAction(ChartingAction):
         if not data:
             raise ValueError("Failed to obtain data for graph.")
 
-        # For Pie chart, sort by count. Largest first.
-        data.sort(key=lambda i: i[1], reverse=True)
+        # For Pie chart, Sorting by ascending or descending(Given by user)
+        sort_param = arg.get('sort')
+        if '-' in sort_param[0]:
+            data.sort(key=lambda i: i[1], reverse=True)
+        else:
+            data.sort(key=lambda i: i[1])
+        
+
 
         # build image here
 
