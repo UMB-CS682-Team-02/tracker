@@ -186,7 +186,7 @@ class ChartingAction(Action):
 
         return
     
-    def plot_data_for_Stackedbar_Chart(self, data, arg, chart):
+    def plot_grouped_bar_data(self, data, arg, chart):
         # add a link to each data point. Clicking it will filter
         # down to the issued in that slice/bar.
         # Remove and replace the @filter url param. Only
@@ -210,73 +210,9 @@ class ChartingAction(Action):
         for issue_type, status_counts in data.items():
             for status, count in status_counts.items():
                 status_data[status][issue_type] = count        
-        # Add statuses as categories and issue types with their counts as stacks
-        for status, issue_counts in status_data.items():
-            xlink = {
-                'target': '_blank',
-                'href': current_url + "&@filter=%(filter)s&%(gprop)s=%(gval)s" % {
-                    'gprop': gprop.split(',')[1],  # Assuming status is the second element in gprop
-                    'gval': status,
-                    'filter': ','.join(current_filter)  # Use the current filter as it is
-                }
-            }
-
-            # Add the status data to the chart
-            chart.add(status, [{'value': count, 'xlink': xlink} for issue_type, count in issue_counts.items()])
-
-        return
-    
-    # for status, issue_counts in status_data.items():
-#         #     for priority, count in issue_counts.items():
-#         #         # Generate link for the current status and priority
-#         #         xlink = {
-#         #             'target': '_blank',
-#         #             'href': current_url + "&@filter=%(filter)s&%(priority_prop)s=%(priority_val)s&%(status_prop)s=%(status_val)s" % {
-#         #                 'filter': filter,
-#         #                 'priority_prop': 'priority',  # Assuming the property name for priority is 'priority'
-#         #                 'priority_val': priority,  # Get priority value from the loop
-#         #                 'status_prop': 'status',  # Assuming the property name for status is 'status'
-#         #                 'status_val': status,
-#         #             }
-#         #         }
-#         #         # Add the status data to the chart
-#         #         # chart.add(f"{priority} - {status}", [{'value': count, 'xlink': xlink}])
-#         #         print(issue_counts)
-#         #         chart.add(status, [{'value': count, 'xlink': xlink} for issue_type, count in issue_counts.items()])
-
-    
-    def plot_data_fro_multibar_chart(self, data, arg, chart):
-        # add a link to each data point. Clicking it will filter
-        # down to the issued in that slice/bar.
-        # Remove and replace the @filter url param. Only
-        # the last one is used. So we add the property used for
-        # grouping to the existing filter and generate the new
-        # url.
-        current_filter = arg['request'].filter
-        arg['request'].filter = None  # erase filter
-        # get new url without filter
-        current_url = arg['request'].current_url()
-        # get grouping property name
-        gprop = [arg['group'][0][1], 'status']
-
-        if isinstance(gprop, list):
-            gprop = ','.join(gprop)
-
-        # generate a new @filter value adding the gprop
-        filter = ','.join(current_filter + [gprop])
-        # Rearrange data structure to have statuses as keys and issue types with their counts as values
-        status_data = defaultdict(dict)
-        for issue_type, status_counts in data.items():
-            for status, count in status_counts.items():
-                status_data[status][issue_type] = count        
-
-        # Create an empty dictionary to store the formatted data
-        formatted_data = {}
-
         for status, issue_counts in status_data.items():
             # Create a dictionary to store data for the current status
             status_dict = {}
-            
             for priority, count in issue_counts.items():
                 # Generate link for the current status and priority
                 xlink = {
@@ -289,30 +225,10 @@ class ChartingAction(Action):
                         'status_val': status,
                     }
                 }
-                
                 # Add count and xlink to the inner dictionary for the current priority
                 status_dict[priority] = {'count': count, 'xlink': xlink}
-            
             # Add the inner dictionary to the formatted_data dictionary
-            formatted_data[status] = status_dict
-        # Create lists to store the x labels, counts, and links
-        x_labels = []
-        counts = []
-        links = []
-        # Now the formatted_data dictionary contains the data in the desired format
-        for status, priority_data in formatted_data.items():
-            x_labels.append(status)  # Add the status to the x labels
-            count_data = []
-            xlink_data = []
-            # Iterate over the priority data
-            for priority, data in priority_data.items():
-                count_data.append(data['count'])
-                xlink_data.append(data['xlink'])  # Extract the URL from the xlink dictionary
-            counts.append(count_data)  # Add the count data to the counts list
-            links.append(xlink_data)   # Add the links data to the links list
-        for i, status in enumerate(x_labels):
-            chart.add(status, counts[i], xlink=links[i])
-            print(links[i])
+            chart.add(status, [{'value': data['count'], 'xlink': data['xlink']} for priority, data in status_dict.items()])
         return
     
     def pygal_add_nonce(self):
@@ -670,7 +586,7 @@ class StackedBarChartAction(ChartingAction):
                           )
         
         chart.nonce = self.client.client_nonce
-        self.plot_data_for_Stackedbar_Chart(data, arg, chart)
+        self.plot_grouped_bar_data(data, arg, chart)
 
         # Give a title 
         chart.title = "Tickets grouped by Priority and Status"
@@ -771,7 +687,7 @@ class MultiBarChartAction(ChartingAction):
                           )
         
         chart.nonce = self.client.client_nonce
-        self.plot_data_fro_multibar_chart(data, arg, chart)
+        self.plot_grouped_bar_data(data, arg, chart)
 
         # Give a title 
         chart.title = "MultiBar Chart of tickets grouped by Priority and Status"
