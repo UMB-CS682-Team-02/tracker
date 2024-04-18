@@ -606,19 +606,8 @@ class HorizontalBarChartAction(ChartingAction):
         headers = self.client.additional_headers
         headers['Content-Type'] = self.output_type
 
-        if self.output_type == 'image/svg+xml':
-            image = chart.render(is_unicode=True, pretty_print=True)
-            headers['Content-Disposition'] = 'inline; filename=pieChart.svg'
-        elif self.output_type == 'image/png':
-            image = chart.render_to_png()
-            headers['Content-Disposition'] = 'inline; filename=pieChart.png'
-            # with open('/tmp/image.png', 'rb') as infile:
-            #    image=infile.read()
-        elif self.output_type == 'data:':
-            image = chart.render_data_uri(is_unicode=True)
-        else:
-            raise ValueError("Unknown pygal output type: %s" %
-                             self.output_type)
+        # Render the chart and return the SVG image
+        image = chart.render()
 
         return bs2b(image)  # send through Client.write_html()
 
@@ -720,9 +709,9 @@ class StackedBarChartAction(ChartingAction):
         self.plot_grouped_bar_data(data, arg, chart)
 
         # Give a title 
-        chart.title = "Tickets grouped by %s and %s \n(%s)" % (arg['group'][0][1], arg['group'][1][1],
-                                                        db.config.TRACKER_NAME)
-        
+        # chart.title = "Tickets grouped by %s and %s \n(%s)" % (arg['group'][0][1], arg['group'][1][1], db.config.TRACKER_NAME)
+        chart.title = "Tickets grouped by Priority and Status"
+
         # Set labels for the x-axis
         chart.x_labels = list(data.keys())
 
@@ -842,9 +831,10 @@ class MultiBarChartAction(ChartingAction):
         self.plot_grouped_bar_data(data, arg, chart)
 
         # Give a title 
-        chart.title = "Tickets grouped by %s and %s \n(%s)" % (arg['group'][0][1], arg['group'][1][1],
-                                                        db.config.TRACKER_NAME)
+        # chart.title = "Tickets grouped by %s and %s \n(%s)" % (arg['group'][0][1], arg['group'][1][1], db.config.TRACKER_NAME)
+        chart.title = "Tickets grouped by Priority and Status"
         
+
         # Set labels for the x-axis
         chart.x_labels = list(data.keys())
 
