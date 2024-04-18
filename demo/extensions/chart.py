@@ -208,17 +208,50 @@ class ChartingAction(Action):
 
         return
     
-    def plot_data_for_Stackedbar_Chart(self, data, arg, chart):
+    def plot_grouped_bar_data(self, data, arg, chart):
+        # add a link to each data point. Clicking it will filter
+        # down to the issued in that slice/bar.
+        # Remove and replace the @filter url param. Only
+        # the last one is used. So we add the property used for
+        # grouping to the existing filter and generate the new
+        # url.
+        current_filter = arg['request'].filter
+        arg['request'].filter = None  # erase filter
+        # get new url without filter
+        current_url = arg['request'].current_url()
+        # get grouping property name
+        gprop = [arg['group'][0][1], 'status']
+
+        if isinstance(gprop, list):
+            gprop = ','.join(gprop)
+
+        # generate a new @filter value adding the gprop
+        filter = ','.join(current_filter + [gprop])
         # Rearrange data structure to have statuses as keys and issue types with their counts as values
         status_data = defaultdict(dict)
         for issue_type, status_counts in data.items():
             for status, count in status_counts.items():
                 status_data[status][issue_type] = count        
-        # Add statuses as categories and issue types with their counts as stacks
         for status, issue_counts in status_data.items():
-            chart.add(status, issue_counts)
+            # Create a dictionary to store data for the current status
+            status_dict = {}
+            for priority, count in issue_counts.items():
+                # Generate link for the current status and priority
+                xlink = {
+                    'target': '_blank',
+                    'href': current_url + "&@filter=%(filter)s&%(priority_prop)s=%(priority_val)s&%(status_prop)s=%(status_val)s" % {
+                        'filter': filter,
+                        'priority_prop': 'priority',  # Assuming the property name for priority is 'priority'
+                        'priority_val': priority,  # Get priority value from the loop
+                        'status_prop': 'status',  # Assuming the property name for status is 'status'
+                        'status_val': status,
+                    }
+                }
+                # Add count and xlink to the inner dictionary for the current priority
+                status_dict[priority] = {'count': count, 'xlink': xlink}
+            # Add the inner dictionary to the formatted_data dictionary
+            chart.add(status, [{'value': data['count'], 'xlink': data['xlink']} for priority, data in status_dict.items()])
         return
-        
     
     def pygal_add_nonce(self):
         """Modify the pygal style and script methods to add a nonce
@@ -507,7 +540,119 @@ class BarChartAction(ChartingAction):
 
         return bs2b(image)  # send through Client.write_html()
     
-    
+
+
+class HorizontalBarChartAction(ChartingAction):
+    """Generate a bar chart from the result of an index query. Sum items
+       per group.
+    """
+
+    # set output image type. svg is interactive
+    output_type = "image/svg+xml"
+    # output_type = 'image/png'
+
+    def handle(self):
+        ''' Show chart for current query results
+        '''
+        db = self.db
+
+        # 'arg' will contain all the data that we need to pass to
+        # the data retrival step.
+        arg = {}
+
+        # needed to get the query data
+        request = templating.HTMLRequest(self.client)
+
+        arg['request'] = request
+
+        arg['classname'] = request.classname
+
+        if request.filterspec:
+            arg['filterspec'] = request.filterspec
+
+        if request.group:
+            # assumption is that this is a list of tuples for most
+            # cases
+            arg['group'] = request.group
+
+        if request.search_text:
+            arg['search_text'] = request.search_text
+
+        # execute the query again and count grouped items
+        # data looks like list of (grouped_label, count):
+        '''
+          data = [ ("admin", 25),
+                 ("demo", 15),
+                 ("agent", 45),
+                 ("provisional", 65),
+                 ]
+        '''
+        data = self.get_data_from_query(db, **arg)
+
+        if not data:
+            raise ValueError("Failed to obtain data for graph.")
+
+        # build image here
+
+        config = pygal.Config()
+        # Customize CSS
+        # Almost all font-* here needs to be !important. Base styles include
+        #  the #custom-chart-anchor which gives the base setting higher
+        #  specificy/priority.  I don't know how to get that value so I can
+        #  add it to the rules. I suspect with code reading I could set some
+        #  of these using pygal.style....
+
+        # make plot title larger and wrap lines
+        config.css.append('''inline:
+          g.titles text.plot_title {
+            font-size: 20px !important;
+            white-space: pre-line;
+          }''')
+        config.css.append('''inline:
+          g.legend text {
+            font-size: 8px !important;
+            white-space: pre-line;
+          }''')
+        # make background of popup label solid.
+        config.css.append('''inline:
+          g.tooltip .tooltip-box {
+            fill: #fff !important;
+          }''')
+
+        pygal.style.Style(background='transparent',
+                          plot_background='transparent')
+
+        if self.jsURL:
+            config.js[0] = self.jsURL
+
+        self.pygal_add_nonce()
+
+        chart = pygal.HorizontalBar(config,
+                          width=400,
+                          height=400,
+                          print_values=True,
+                          # make embedding easier
+                          disable_xml_declaration=True,
+                          )
+
+        chart.nonce = self.client.client_nonce
+        self.plot_data(data, arg, chart)
+
+        # WARN this will break if group is not list of tuples
+        chart.title = "Tickets grouped by %s \n(%s)" % (arg['group'][0][1],
+                                                        db.config.TRACKER_NAME)
+
+        headers = self.client.additional_headers
+        headers['Content-Type'] = self.output_type
+
+        # Render the chart and return the SVG image
+        image = chart.render()
+
+        return bs2b(image)  # send through Client.write_html()
+
+
+
+
 class StackedBarChartAction(ChartingAction):
     """Generate a stacked bar chart from the result of an index query. Sum items
        per group and stack by status.
@@ -541,7 +686,15 @@ class StackedBarChartAction(ChartingAction):
         if request.search_text:
             arg['search_text'] = request.search_text
         
-
+        # execute the query again and count grouped items
+        # data looks like below:
+        '''
+          data = [ {Critical: ("urgent", 25),
+                 ("ready", 15)},
+                 {Normal: ("agent", 45),
+                 ("provisional", 65)}
+                 ]
+        '''
         # Execute the query again and count grouped items
         data = self.get_sample_data_from_query(db, **arg)
 
@@ -586,37 +739,50 @@ class StackedBarChartAction(ChartingAction):
         chart = pygal.StackedBar(config,
                           width=400,
                           height=400,
-                          print_values=True,
+                          print_values=False,
                           # make embedding easier
                           disable_xml_declaration=True,
                           )
         
         chart.nonce = self.client.client_nonce
-        self.plot_data_for_Stackedbar_Chart(data, arg, chart)
+        self.plot_grouped_bar_data(data, arg, chart)
 
         # Give a title 
+        # chart.title = "Tickets grouped by %s and %s \n(%s)" % (arg['group'][0][1], arg['group'][1][1], db.config.TRACKER_NAME)
         chart.title = "Tickets grouped by Priority and Status"
-
-        headers = self.client.additional_headers
-        headers['Content-Type'] = self.output_type
 
         # Set labels for the x-axis
         chart.x_labels = list(data.keys())
 
-        # Render the chart and return the SVG image
-        image = chart.render()
-        #headers['Content-Disposition'] = 'inline; filename=stackedChart.svg'
+        headers = self.client.additional_headers
+        headers['Content-Type'] = self.output_type
+
+        if self.output_type == 'image/svg+xml':
+            image = chart.render(is_unicode=True, pretty_print=True)
+            headers['Content-Disposition'] = 'inline; filename=pieChart.svg'
+        elif self.output_type == 'image/png':
+            image = chart.render_to_png()
+            headers['Content-Disposition'] = 'inline; filename=pieChart.png'
+            # with open('/tmp/image.png', 'rb') as infile:
+            #    image=infile.read()
+        elif self.output_type == 'data:':
+            image = chart.render_data_uri(is_unicode=True)
+        else:
+            raise ValueError("Unknown pygal output type: %s" %
+                             self.output_type)
 
         return bs2b(image)
     
 
     
 class MultiBarChartAction(ChartingAction):
-    """Generate a multi-bar chart from the result of an index query. Each group represents a separate bar.
+    """Generate a multi-bar chart from the result of an index query. 
+        Each group represents a separate bar.
     """
 
     # set output image type. svg is interactive
     output_type = "image/svg+xml"
+    # output_type = 'image/png'
 
     def handle(self):
         ''' Show chart for current query results
@@ -642,7 +808,15 @@ class MultiBarChartAction(ChartingAction):
         if request.search_text:
             arg['search_text'] = request.search_text
         
-
+        # execute the query again and count grouped items
+        # data looks like below:
+        '''
+          data = [ {Critical: ("urgent", 25),
+                 ("ready", 15)},
+                 {Normal: ("agent", 45),
+                 ("provisional", 65)}
+                 ]
+        '''
         # Execute the query again and count grouped items
         data = self.get_sample_data_from_query(db, **arg)
 
@@ -693,19 +867,32 @@ class MultiBarChartAction(ChartingAction):
                           )
         
         chart.nonce = self.client.client_nonce
-        self.plot_data_for_Stackedbar_Chart(data, arg, chart)
+        self.plot_grouped_bar_data(data, arg, chart)
 
         # Give a title 
-        chart.title = "MultiBar Chart of tickets grouped by Priority and Status"
-
-        headers = self.client.additional_headers
-        headers['Content-Type'] = self.output_type
+        # chart.title = "Tickets grouped by %s and %s \n(%s)" % (arg['group'][0][1], arg['group'][1][1], db.config.TRACKER_NAME)
+        chart.title = "Tickets grouped by Priority and Status"
+        
 
         # Set labels for the x-axis
         chart.x_labels = list(data.keys())
 
-        # Render the chart and return the SVG image
-        image = chart.render()
+        headers = self.client.additional_headers
+        headers['Content-Type'] = self.output_type
+
+        if self.output_type == 'image/svg+xml':
+            image = chart.render(is_unicode=True, pretty_print=True)
+            headers['Content-Disposition'] = 'inline; filename=pieChart.svg'
+        elif self.output_type == 'image/png':
+            image = chart.render_to_png()
+            headers['Content-Disposition'] = 'inline; filename=pieChart.png'
+            # with open('/tmp/image.png', 'rb') as infile:
+            #    image=infile.read()
+        elif self.output_type == 'data:':
+            image = chart.render_data_uri(is_unicode=True)
+        else:
+            raise ValueError("Unknown pygal output type: %s" %
+                             self.output_type)
 
         return bs2b(image)
 
@@ -815,3 +1002,4 @@ def init(instance):
     instance.registerAction('barchart', BarChartAction)
     instance.registerAction('stackedchart', StackedBarChartAction)
     instance.registerAction('multibarchart', MultiBarChartAction)
+    instance.registerAction('horizontalbarchart', HorizontalBarChartAction)
