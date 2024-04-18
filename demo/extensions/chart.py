@@ -48,117 +48,159 @@ class ChartingAction(Action):
             matches = None
         log.append('matches=%s' % matches)
 
-        # if group is a list, extract first property ...
-        # group may also be a single tuple
-        # FIXME support multiple property group
-        property = None
-        if isinstance(group, type([])):
+        # if group is a list and has one property, extract first property ...
+        if(len(group)==1):
             property = group[0][1]
-        elif isinstance(group, type(())):
-            property = group[1]
+            log.append('property=%s' % property)
 
-        log.append('property=%s' % property)
+            try:
+                prop_type = cl.getprops()[property]
+                log.append('prop_type=%s' % prop_type)
+            except KeyError:
+                raise ValueError(
+                    'Charts can only be created on '
+                    'linked group properties! %s is not '
+                    'a valid property\n' % property)
 
-        try:
-            prop_type = cl.getprops()[property]
-            log.append('prop_type=%s' % prop_type)
-        except KeyError:
-            raise ValueError(
-                'Charts can only be created on '
-                'linked group properties! %s is not '
-                'a valid property\n' % property)
+            if not isinstance(prop_type, hyperdb.Link) \
+            and not isinstance(prop_type, hyperdb.Multilink):
+                raise ValueError(
+                    'Charts can only be created on '
+                    'linked group properties! %s is not '
+                    'a linked property\n' % property)
+                return
 
-        if not isinstance(prop_type, hyperdb.Link) \
-           and not isinstance(prop_type, hyperdb.Multilink):
-            raise ValueError(
-                'Charts can only be created on '
-                'linked group properties! %s is not '
-                'a linked property\n' % property)
-            return
+            klass = db.getclass(prop_type.classname)
+            log.append('klass=%s' % klass)
 
-        klass = db.getclass(prop_type.classname)
-        log.append('klass=%s' % klass)
+            # build a property dict, eg: { 'new':1, 'assigned':2 }
+            # in
+            # case of status
+            props = {}
 
-        # build a property dict, eg: { 'new':1, 'assigned':2 }
-        # in
-        # case of status
-        props = {}
+            if not filterspec:
+                filterspec = {}
 
-        if not filterspec:
-            filterspec = {}
+            issues = cl.filter(matches, filterspec, sort=[('+', 'id')],
+                            group=group)
 
-        issues = cl.filter(matches, filterspec, sort=[('+', 'id')],
-                           group=group)
-
-        log.append('issues=%s' % issues)
-        for nodeid in issues:
-            if not self.hasPermission('View', itemid=nodeid,
-                                      classname=cl.classname):
-                continue
-            prop_ids = cl.get(nodeid, property)
-            if prop_ids:
-                if not isinstance(prop_ids, type([])):
-                    prop_ids = [prop_ids]
-                for id in prop_ids:
-                    prop = klass.get(id, klass.labelprop())
+            log.append('issues=%s' % issues)
+            for nodeid in issues:
+                if not self.hasPermission('View', itemid=nodeid,
+                                        classname=cl.classname):
+                    continue
+                prop_ids = cl.get(nodeid, property)
+                if prop_ids:
+                    if not isinstance(prop_ids, type([])):
+                        prop_ids = [prop_ids]
+                    for id in prop_ids:
+                        prop = klass.get(id, klass.labelprop())
+                        key = prop.replace('/', '-')
+                        if key in props:
+                            props[key] += 1
+                        else:
+                            props[key] = 1
+                else:
+                    prop = 'Unassigned'
+                    if prop not in props:
+                        props[prop] = 0
                     key = prop.replace('/', '-')
                     if key in props:
                         props[key] += 1
                     else:
                         props[key] = 1
-            else:
-                prop = 'Unassigned'
-                if prop not in props:
-                    props[prop] = 0
-                key = prop.replace('/', '-')
-                if key in props:
-                    props[key] += 1
-                else:
-                    props[key] = 1
-        log.append('props=%s' % props)
-        chart = [(k, v) for k, v in props.items()]
+            log.append('props=%s' % props)
+            chart = [(k, v) for k, v in props.items()]
 
-        if '@image_type' in self.form:
-            self.output_type = self.form['@image_type'].value
+            if '@image_type' in self.form:
+                self.output_type = self.form['@image_type'].value
 
-        if '@embedded' in self.form:
-            try:
-                self.embedded = bool(int(self.form['@embedded']))
-            except ValueError:
-                pass
-        return chart
-    
-    
-    def get_sample_data_from_query(self, db, classname=None, filterspec=None,
-                        group=None, search_text=None, **other):
-        """Parse and summarize the query submitted into a data table."""
-        cl = db.getclass(classname)
-        data = defaultdict(lambda: defaultdict(int))  # Initialize defaultdict for storing data
-        
-        # Full-text search
-        if search_text:
-            matches = db.indexer.search(re.findall(r'\b\w{2,25}\b', search_text), cl)
+            if '@embedded' in self.form:
+                try:
+                    self.embedded = bool(int(self.form['@embedded']))
+                except ValueError:
+                    pass
+            return chart
+        # if group is a list and has two property, extract both property ...
         else:
-            matches = None
+            data = defaultdict(lambda: defaultdict(int))  # Initialize defaultdict for storing data
+            first_prop = group[0][1]
+            second_prop = group[1][1]
+            try:
+                first_prop_type = cl.getprops()[first_prop]
+            except KeyError:
+                raise ValueError(
+                    'Charts can only be created on '
+                    'linked group properties! %s is not '
+                    'a valid property\n' % first_prop)
+            
+            if not isinstance(first_prop_type, hyperdb.Link) \
+            and not isinstance(first_prop_type, hyperdb.Multilink):
+                raise ValueError(
+                    'Charts can only be created on '
+                    'linked group properties! %s is not '
+                    'a linked property\n' % first_prop)
+                return
 
-        # Iterate through issues and count occurrences of status within each title category
-        issues = cl.filter(matches, filterspec, sort=[('+', 'id')], group=group)
-        for nodeid in issues:
-            if not self.hasPermission('View', itemid=nodeid, classname=cl.classname):
-                continue
-            title_id = cl.get(nodeid, 'priority')  # Get the priority of the issue
-            status_id = cl.get(nodeid, 'status')  # Get the status of the issue
-            title = db.getclass('priority').get(title_id, 'name')  # Get the name of the priority
-            status = db.getclass('status').get(status_id, 'name')
-            data[title][status] += 1  # Increment count for the specific title and status
+            try:
+                second_prop_type = cl.getprops()[second_prop]
+            except KeyError:
+                raise ValueError(
+                    'Charts can only be created on '
+                    'linked group properties! %s is not '
+                    'a valid property\n' % second_prop)
 
-        # Convert defaultdict to standard dictionary
-        data = dict(data)
-        for title, status_count in data.items():
-            data[title] = dict(status_count)
-        return data
+            if not isinstance(second_prop_type, hyperdb.Link) \
+            and not isinstance(second_prop_type, hyperdb.Multilink):
+                raise ValueError(
+                    'Charts can only be created on '
+                    'linked group properties! %s is not '
+                    'a linked property\n' % second_prop)
+                return
+            
+            # Iterate through issues and count occurrences of status within each title category
+            issues = cl.filter(matches, filterspec, sort=[('+', 'id')], group=group)
+            # set the key value based on the property type
+            key1 = 'name'
+            key2 = 'name'
+            if first_prop == 'actor' or first_prop == 'assignedto' or first_prop== 'creator':
+                key1='username'
+            if second_prop == 'actor' or second_prop == 'assignedto' or second_prop== 'creator':
+                key2='username'
+            
+            # check if any unassigned value is stored in either of the property 
+            invalid_values = {'files', 'keyword', 'messages', 'nosy', 'superseder'}
+            # Check both first_prop and second_prop
+            for prop in (first_prop, second_prop):
+                if prop in invalid_values:
+                    raise ValueError(f"Invalid value for {prop}: {prop}. It should not be in {invalid_values}")
+
+            for nodeid in issues:
+                if not self.hasPermission('View', itemid=nodeid, classname=cl.classname):
+                    continue
+                first_prop_id = cl.get(nodeid, group[0][1])  # Get the priority of the issue
+                second_prop_id = cl.get(nodeid, group[1][1])  # Get the status of the issue
+                first_prop = db.getclass(first_prop_type.classname).get(first_prop_id, key1)  # Get the name of the priority
+                second_prop = db.getclass(second_prop_type.classname).get(second_prop_id, key2)
+                data[first_prop][second_prop] += 1  # Increment count for the specific title and status
+
+            # Convert defaultdict to standard dictionary
+            data = dict(data)
+            for first_prop, second_prop_count in data.items():
+                data[first_prop] = dict(second_prop_count)
+            
+            if '@image_type' in self.form:
+                self.output_type = self.form['@image_type'].value
+
+            if '@embedded' in self.form:
+                try:
+                    self.embedded = bool(int(self.form['@embedded']))
+                except ValueError:
+                    pass
+            
+            return data
     
-    def plot_data(self, data, arg, chart):
+    def plot_data(self, data, arg, chart, level_of_grouping):
         # add a link to each data point. Clicking it will filter
         # down to the issued in that slice/bar.
         # Remove and replace the @filter url param. Only
@@ -170,67 +212,52 @@ class ChartingAction(Action):
         # get new url without filter
         current_url = arg['request'].current_url()
         # get grouping property name
-        gprop = arg['group'][0][1]
-        # generate a new @filter value adding the gprop
-        filter = ','.join(current_filter + [gprop])
-        for d in data:
-            xlink = {'target': '_blank',
-                     'href': current_url +
-                     "&@filter=%(filter)s&%(gprop)s=%(gval)s" % {
-                         'gprop': gprop,
-                         'gval': d[0] if d[0] != "Unassigned" else -1,
-                         'filter': filter,
-                     }}
+        if(len(arg['group'])==1 and level_of_grouping == 1):
+            gprop = [arg['group'][0][1]]
+            # generate a new @filter value adding the gprop
+            filter = ','.join(current_filter + [gprop[0]])
+            for d in data:
+                xlink = {'target': '_blank',
+                        'href': current_url +
+                        "&@filter=%(filter)s&%(gprop)s=%(gval)s" % {
+                            'gprop': gprop,
+                            'gval': d[0] if d[0] != "Unassigned" else -1,
+                            'filter': filter,
+                        }}
 
-            chart.add(d[0], [{'value': d[1], 'xlink': xlink}])
-
-        return
-    
-    def plot_grouped_bar_data(self, data, arg, chart):
-        # add a link to each data point. Clicking it will filter
-        # down to the issued in that slice/bar.
-        # Remove and replace the @filter url param. Only
-        # the last one is used. So we add the property used for
-        # grouping to the existing filter and generate the new
-        # url.
-        current_filter = arg['request'].filter
-        arg['request'].filter = None  # erase filter
-        # get new url without filter
-        current_url = arg['request'].current_url()
-        # get grouping property name
-        gprop = [arg['group'][0][1], 'status']
-
-        if isinstance(gprop, list):
-            gprop = ','.join(gprop)
-
-        # generate a new @filter value adding the gprop
-        filter = ','.join(current_filter + [gprop])
-        # Rearrange data structure to have statuses as keys and issue types with their counts as values
-        status_data = defaultdict(dict)
-        for issue_type, status_counts in data.items():
-            for status, count in status_counts.items():
-                status_data[status][issue_type] = count        
-        for status, issue_counts in status_data.items():
-            # Create a dictionary to store data for the current status
-            status_dict = {}
-            for priority, count in issue_counts.items():
-                # Generate link for the current status and priority
-                xlink = {
-                    'target': '_blank',
-                    'href': current_url + "&@filter=%(filter)s&%(priority_prop)s=%(priority_val)s&%(status_prop)s=%(status_val)s" % {
-                        'filter': filter,
-                        'priority_prop': 'priority',  # Assuming the property name for priority is 'priority'
-                        'priority_val': priority,  # Get priority value from the loop
-                        'status_prop': 'status',  # Assuming the property name for status is 'status'
-                        'status_val': status,
+                chart.add(d[0], [{'value': d[1], 'xlink': xlink}])
+        elif(len(arg['group'])==2 and level_of_grouping == 2):
+            gprop = [arg['group'][0][1], arg['group'][1][1]]
+            if isinstance(gprop, list):
+                filter = ','.join(gprop)
+            # Rearrange data structure to have second property as keys and first property with their counts as values
+            second_prop_data = defaultdict(dict)
+            for first_prop, first_prop_counts in data.items():
+                for second_prop, second_prop_count in first_prop_counts.items():
+                    second_prop_data[second_prop][first_prop] = second_prop_count        
+            for second_prop, second_prop_counts in second_prop_data.items():
+                # Create a dictionary to store data for the current second_prop
+                second_prop_dict = {}
+                for first_prop, count in second_prop_counts.items():
+                    # Generate link for the current second_prop and first_prop
+                    xlink = {
+                        'target': '_blank',
+                        'href': current_url + "&@filter=%(filter)s&%(first_prop)s=%(first_prop_val)s&%(second_prop)s=%(second_prop_val)s" % {
+                            'filter': filter,
+                            'first_prop': gprop[0],  # Assuming the property name for first_prop is 'first_prop'
+                            'first_prop_val': first_prop,  # Get first_prop value from the loop
+                            'second_prop': gprop[1],  # Assuming the property name for second_prop is 'second_prop'
+                            'second_prop_val': second_prop,
+                        }
                     }
-                }
-                # Add count and xlink to the inner dictionary for the current priority
-                status_dict[priority] = {'count': count, 'xlink': xlink}
-            # Add the inner dictionary to the formatted_data dictionary
-            chart.add(status, [{'value': data['count'], 'xlink': data['xlink']} for priority, data in status_dict.items()])
+                    # Add count and xlink to the inner dictionary for the current first_prop
+                    second_prop_dict[first_prop] = {'count': count, 'xlink': xlink}
+                # Add the inner dictionary to the formatted_data dictionary
+                chart.add(second_prop, [{'value': data['count'], 'xlink': data['xlink']} for first_prop, data in second_prop_dict.items()])
+        else:
+            print("Select appropriate chart and grouping")
         return
-    
+
     def pygal_add_nonce(self):
         """Modify the pygal style and script methods to add a nonce
            so it will work under a CSP.
@@ -285,6 +312,9 @@ class PieChartAction(ChartingAction):
             # assumption is that this is a list of tuples for most
             # cases
             arg['group'] = request.group
+        
+        if len(arg['group']) > 1:
+            raise ValueError("Remove second level of grouping to see piechart")
 
         if request.search_text:
             arg['search_text'] = request.search_text
@@ -355,8 +385,8 @@ class PieChartAction(ChartingAction):
                           )
 
         chart.nonce = self.client.client_nonce
-
-        self.plot_data(data, arg, chart)
+        level_of_grouping = 1
+        self.plot_data(data, arg, chart, level_of_grouping)
 
         # WARN this will break if group is not list of tuples
         chart.title = "Tickets grouped by %s \n(%s)" % (arg['group'][0][1],
@@ -414,6 +444,9 @@ class BarChartAction(ChartingAction):
             # assumption is that this is a list of tuples for most
             # cases
             arg['group'] = request.group
+
+        if len(arg['group']) > 1:
+            raise ValueError("Remove second level of grouping to see Barchart")
 
         if request.search_text:
             arg['search_text'] = request.search_text
@@ -476,7 +509,8 @@ class BarChartAction(ChartingAction):
                           )
 
         chart.nonce = self.client.client_nonce
-        self.plot_data(data, arg, chart)
+        level_of_grouping = 1
+        self.plot_data(data, arg, chart, level_of_grouping)
 
         # WARN this will break if group is not list of tuples
         chart.title = "Tickets grouped by %s \n(%s)" % (arg['group'][0][1],
@@ -535,6 +569,9 @@ class HorizontalBarChartAction(ChartingAction):
             # assumption is that this is a list of tuples for most
             # cases
             arg['group'] = request.group
+
+        if len(arg['group']) > 1:
+            raise ValueError("Remove second level of grouping to see Horizontal Barchart")
 
         if request.search_text:
             arg['search_text'] = request.search_text
@@ -597,8 +634,8 @@ class HorizontalBarChartAction(ChartingAction):
                           )
 
         chart.nonce = self.client.client_nonce
-        self.plot_data(data, arg, chart)
-
+        level_of_grouping = 1
+        self.plot_data(data, arg, chart, level_of_grouping)
         # WARN this will break if group is not list of tuples
         chart.title = "Tickets grouped by %s \n(%s)" % (arg['group'][0][1],
                                                         db.config.TRACKER_NAME)
@@ -610,8 +647,6 @@ class HorizontalBarChartAction(ChartingAction):
         image = chart.render()
 
         return bs2b(image)  # send through Client.write_html()
-
-
 
 
 class StackedBarChartAction(ChartingAction):
@@ -644,6 +679,9 @@ class StackedBarChartAction(ChartingAction):
         if request.group:
             arg['group'] = request.group
 
+        if len(arg['group']) < 2:
+            raise ValueError("Select second level of grouping to see Stacked Barchart")
+
         if request.search_text:
             arg['search_text'] = request.search_text
         
@@ -657,7 +695,7 @@ class StackedBarChartAction(ChartingAction):
                  ]
         '''
         # Execute the query again and count grouped items
-        data = self.get_sample_data_from_query(db, **arg)
+        data = self.get_data_from_query(db, **arg)
 
         if not data:
             raise ValueError("Failed to obtain data for graph.")
@@ -706,11 +744,11 @@ class StackedBarChartAction(ChartingAction):
                           )
         
         chart.nonce = self.client.client_nonce
-        self.plot_grouped_bar_data(data, arg, chart)
+        level_of_grouping = 2
+        self.plot_data(data, arg, chart, level_of_grouping)
 
         # Give a title 
-        # chart.title = "Tickets grouped by %s and %s \n(%s)" % (arg['group'][0][1], arg['group'][1][1], db.config.TRACKER_NAME)
-        chart.title = "Tickets grouped by Priority and Status"
+        chart.title = "Tickets grouped by %s and %s \n(%s)" % (arg['group'][0][1], arg['group'][1][1], db.config.TRACKER_NAME)
 
         # Set labels for the x-axis
         chart.x_labels = list(data.keys())
@@ -766,6 +804,9 @@ class MultiBarChartAction(ChartingAction):
         if request.group:
             arg['group'] = request.group
 
+        if len(arg['group']) < 2:
+            raise ValueError("Select second level of grouping to see  MultiBarchart")
+
         if request.search_text:
             arg['search_text'] = request.search_text
         
@@ -779,7 +820,7 @@ class MultiBarChartAction(ChartingAction):
                  ]
         '''
         # Execute the query again and count grouped items
-        data = self.get_sample_data_from_query(db, **arg)
+        data = self.get_data_from_query(db, **arg)
 
         if not data:
             raise ValueError("Failed to obtain data for graph.")
@@ -828,11 +869,10 @@ class MultiBarChartAction(ChartingAction):
                           )
         
         chart.nonce = self.client.client_nonce
-        self.plot_grouped_bar_data(data, arg, chart)
-
+        level_of_grouping = 2
+        self.plot_data(data, arg, chart, level_of_grouping)
         # Give a title 
-        # chart.title = "Tickets grouped by %s and %s \n(%s)" % (arg['group'][0][1], arg['group'][1][1], db.config.TRACKER_NAME)
-        chart.title = "Tickets grouped by Priority and Status"
+        chart.title = "Tickets grouped by %s and %s \n(%s)" % (arg['group'][0][1], arg['group'][1][1], db.config.TRACKER_NAME)
         
 
         # Set labels for the x-axis
