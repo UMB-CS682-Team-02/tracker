@@ -81,7 +81,10 @@ python:db.user.classhelp('username,realname,address', property='nosy', width='60
   <span tal:condition="context/is_edit_ok" tal:replace="structure python:db.keyword.classhelp(property='keyword')" />
  </td>
 </tr>
-
+<tr>
+  <th>Private Issue</th>
+  <td tal:content="structure context/private/field">private</td>
+</tr>
 <tr tal:condition="context/is_edit_ok">
  <th i18n:translate="">Change Note</th>
  <td colspan=3>

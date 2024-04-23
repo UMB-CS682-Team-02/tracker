@@ -1,0 +1,35 @@
+<tal:block metal:use-macro="templates/page/macros/icing">
+<title metal:fill-slot="head_title" >
+  <span tal:omit-tag="true" i18n:translate="" >List of issues</span>
+  <span tal:condition="request/dispname"
+   tal:replace="python:' - %s '%request.dispname"
+  /> - <span tal:replace="config/TRACKER_NAME" />
+</title>
+<span metal:fill-slot="body_title" tal:omit-tag="true">
+  <span tal:omit-tag="true" i18n:translate="" >List of issues</span>
+  <span tal:condition="request/dispname"
+   tal:replace="python:' - %s' % request.dispname" />
+</span>
+<td class="content" metal:fill-slot="content">
+
+<p tal:condition="python:not (context.is_view_ok()
+ or request.user.hasRole('Anonymous'))" i18n:translate="">
+ You are not allowed to view this page.</p>
+
+<p tal:condition="python:not context.is_view_ok()
+ and request.user.hasRole('Anonymous')" i18n:translate="">
+ Please login with your username and password.</p>
+
+<tal:block tal:define="batch request/batch" tal:condition="context/is_view_ok">
+
+<embed type="image/svg+xml" 
+tal:attributes="src python:request.indexargs_url(request.classname,{'@action':request.form.getvalue('@charttype','barchart')})"
+i18n:translate=""
+width="100%" height="100%" /> 
+
+</tal:block>
+
+</td>
+</tal:block><tal:comment condition=false> vim: sw=1 ts=8 et si
+</tal:comment>
+<!-- SHA: 2d63c194a3082fdd3dc97ff9a350085b2e1053d7 -->

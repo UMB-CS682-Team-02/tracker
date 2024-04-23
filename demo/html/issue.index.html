@@ -33,6 +33,7 @@
    <th tal:condition="request/show/status" i18n:translate="">Status</th>
    <th tal:condition="request/show/creator" i18n:translate="">Creator</th>
    <th tal:condition="request/show/assignedto" i18n:translate="">Assigned&nbsp;To</th>
+   <th tal:condition="request/show/private" i18n:translate="">Private</th>
   </tr>
  <tal:block tal:repeat="i batch" condition=true>
   <tr tal:define="group python:[r[1] for r in request.group]"
@@ -67,6 +68,8 @@
        tal:content="python:i.creator.plain() or default">&nbsp;</td>
    <td tal:condition="request/show/assignedto"
        tal:content="python:i.assignedto.plain() or default">&nbsp;</td>
+    <td tal:condition="request/show/private"
+       tal:content="python:i.private.plain() or default">&nbsp;</td>
   </tr>
 
  </tal:block>
@@ -102,19 +105,20 @@
 </table>
 
 <a tal:attributes="href python:request.indexargs_url('issue',
-            {'@action':'export_csv'})" i18n:translate="">Download as CSV</a>
+            {'@action':'export_csv'})" i18n:translate="">Download as CSV</a> &nbsp;
+
 
 <a tal:attributes="href python:request.indexargs_url('issue',
-            {'@action':'piechart'})"  i18n:translate="">Show PieChart</a>
+    {'@template':'chart','@charttype':'piechart'})"  i18n:translate="">Show PieChart</a> &nbsp;
+    
+<a tal:attributes="href python:request.indexargs_url('issue',
+    {'@template':'chart','@charttype':'barchart'})"  i18n:translate="">Show BarChart</a> &nbsp;
 
 <a tal:attributes="href python:request.indexargs_url('issue',
-             {'@action':'barchart'})"  i18n:translate="">Show BarChart</a>
+    {'@template':'chart','@charttype':'stackedchart'})"  i18n:translate="">Show Stacked Barchart</a> &nbsp;
 
 <a tal:attributes="href python:request.indexargs_url('issue',
-             {'@action':'stackedchart'})"  i18n:translate="">Stacked Barchart</a>
-
-<a tal:attributes="href python:request.indexargs_url('issue',
-             {'@action':'multibarchart'})"  i18n:translate="">MultiBarchart</a>
+    {'@template':'chart','@charttype':'multibarchart'})"  i18n:translate="">Show MultiBarchart</a>
 
 <a tal:attributes="href python:request.indexargs_url('issue',
              {'@action':'horizontalbarchart'})"  i18n:translate="">Horizontalbarchart</a>
