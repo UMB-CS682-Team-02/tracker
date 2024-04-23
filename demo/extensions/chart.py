@@ -168,21 +168,25 @@ class ChartingAction(Action):
             if second_prop == 'actor' or second_prop == 'assignedto' or second_prop== 'creator':
                 key2='username'
             
-            # check if any unassigned value is stored in either of the property 
+
+            # Some properties might not have assigned values yet. As grouping operations cannot be performed on null values,
+            # we need to handle these cases. We define a set of properties with no assigned values.
             invalid_values = {'files', 'keyword', 'messages', 'nosy', 'superseder'}
-            # Check both first_prop and second_prop
+
+            # Iterate over both first_prop and second_prop to check for any invalid values.
             for prop in (first_prop, second_prop):
+                # If the current property is in the set of invalid values, raise a ValueError.
                 if prop in invalid_values:
-                    raise ValueError(f"Invalid value for {prop}: {prop}. It should not be in {invalid_values}")
+                    raise ValueError(f"Invalid value found for {prop}: {prop}. It should not be in {invalid_values}")
 
             for nodeid in issues:
                 if not self.hasPermission('View', itemid=nodeid, classname=cl.classname):
                     continue
-                first_prop_id = cl.get(nodeid, group[0][1])  # Get the priority of the issue
-                second_prop_id = cl.get(nodeid, group[1][1])  # Get the status of the issue
-                first_prop = db.getclass(first_prop_type.classname).get(first_prop_id, key1)  # Get the name of the priority
-                second_prop = db.getclass(second_prop_type.classname).get(second_prop_id, key2)
-                data[first_prop][second_prop] += 1  # Increment count for the specific title and status
+                first_prop_id = cl.get(nodeid, group[0][1])  # Get the first property of the issue
+                second_prop_id = cl.get(nodeid, group[1][1])  # Get the second property of the issue
+                first_prop = db.getclass(first_prop_type.classname).get(first_prop_id, key1)  # Get the name of the first property
+                second_prop = db.getclass(second_prop_type.classname).get(second_prop_id, key2) # Get the name of the second property
+                data[first_prop][second_prop] += 1  # Increment count for the specific first and second property
 
             # Convert defaultdict to standard dictionary
             data = dict(data)
