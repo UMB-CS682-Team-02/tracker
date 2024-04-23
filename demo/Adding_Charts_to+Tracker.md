@@ -1,10 +1,13 @@
 To add charting functionality to a new template named `issue.chart.html` based on the provided points, follow these directions:
 
-1. **Duplicate and Rename Template**:
-   - Create a duplicate of `issue.index.html` and name it `issue.chart.html`. 
+1. **create aTemplate**:
+   - Create a template and name it `issue.chart.html`. 
 
-2. **Copy Content**:
-   - Copy all content from `issue.index.html` and paste it into `issue.chart.html`.
+2. **Interactive SVG Demo Using Roundup Display.**:
+   - use Roundup to display that file.ng So the url to
+     display your svg example page should be:
+
+     http://localhost:8917/demo/issue?@template=chart
 
 3. **Change URL**:
    - Replace the URL `@action:piechart/barchart` in `issue.index.html` with `@template:chart` to load the template HTML for viewing charts.
