@@ -1,5 +1,6 @@
 import pygal
 import re
+import gettext
 
 import roundup.hyperdb as hyperdb
 
@@ -357,8 +358,12 @@ class PieChartAction(ChartingAction):
         self.plot_data(data, arg, chart)
 
         # WARN this will break if group is not list of tuples
-        chart.title = "Tickets grouped by %s \n(%s)" % (arg['group'][0][1],
-                                                        db.config.TRACKER_NAME)
+        chart.title = db.i18n.translate("Tickets grouped by %s \n(%s)" % (arg['group'][0][1],
+                                                        db.config.TRACKER_NAME),
+                                                        "Tickets grouped by %s \n(%s)" % (arg['group'][0][1],
+                                                        db.config.TRACKER_NAME))
+        # chart.title = "Tickets grouped by %s \n(%s)" % (arg['group'][0][1],
+        #                                                 db.config.TRACKER_NAME)
 
         headers = self.client.additional_headers
         headers['Content-Type'] = self.output_type

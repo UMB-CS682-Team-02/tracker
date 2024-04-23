@@ -55,6 +55,12 @@ td.page-header-top {
   border-bottom: 1px solid #444;
 }
 
+div.small-multiples {
+  display:flex;
+  flex-wrap: wrap;
+  gap: 32px 48px;
+}
+
 div#searchbox {
   float: right;
   padding-top: 1em;
