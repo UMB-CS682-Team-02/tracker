@@ -909,3 +909,4 @@ def init(instance):
     instance.registerAction('stackedchart', StackedBarChartAction)
     instance.registerAction('multibarchart', MultiBarChartAction)
     instance.registerAction('horizontalbarchart', HorizontalBarChartAction)
+
