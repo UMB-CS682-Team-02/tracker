@@ -21,11 +21,8 @@
  Please login with your username and password.</p>
 
 <tal:block tal:define="batch request/batch" tal:condition="context/is_view_ok">
-<!-- 
-<embed type="image/svg+xml" 
-tal:attributes="src python:request.indexargs_url(request.classname,{'@action':request.form.getvalue('@charttype','barchart')})"
-i18n:translate=""
-width="100%" height="100%" />  -->
+<tal:block tal:condition="python:request.form.getvalue('@charttype').find(',') != -1">
+
 <div tal:attributes="class python:request.form.getvalue('@chart_class')">
 <div>
   <embed type="image/svg+xml" 
@@ -46,6 +43,15 @@ tal:attributes="src python:request.indexargs_url(request.classname,{'@action':re
 i18n:translate="" /> 
 </div>
 </div>
+</tal:block>
+
+<tal:block tal:condition="python:request.form.getvalue('@charttype').find(',') == -1">
+
+<embed type="image/svg+xml" 
+tal:attributes="src python:request.indexargs_url(request.classname,{'@action':request.form.getvalue('@charttype','barchart')})"
+i18n:translate=""
+width="100%" height="100%" /> 
+</tal:block>
 <!-- <span tal:content="python:request.indexargs_url(request.classname,{'@action':request.form.getvalue('@charttype','barchart').split(',')[0]})"></span>
 <span tal:content="python:request.indexargs_url(request.classname,{'@action':request.form.getvalue('@charttype','barchart').split(',')[1]})"></span>
 <span tal:content="python:request.indexargs_url(request.classname,{'@action':request.form.getvalue('@charttype','barchart').split(',')[2]})"></span>

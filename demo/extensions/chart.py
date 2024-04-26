@@ -358,11 +358,17 @@ class PieChartAction(ChartingAction):
         self.plot_data(data, arg, chart)
 
         # WARN this will break if group is not list of tuples
-        chart.title = db.i18n.translate("Tickets grouped by %s \n(%s)" % (arg['group'][0][1],
-                                                        db.config.TRACKER_NAME),
-                                                        "Tickets grouped by %s \n(%s)" % (arg['group'][0][1],
-                                                        db.config.TRACKER_NAME))
-        # chart.title = "Tickets grouped by %s \n(%s)" % (arg['group'][0][1],
+        # chart.title = db.i18n.gettext("Tickets grouped by %s \n(%s)" % (arg['group'][0][1],
+        #                                                 db.config.TRACKER_NAME))
+
+        # chart.title = db.i18n.gettext("Tickets grouped by %s \n(%s)" % (db.i18n.gettext(arg['group'][0][1]),
+        #                                                 db.config.TRACKER_NAME))
+        chart.title = db.i18n.gettext("Tickets grouped by %(propertyName)s \n(%(trackerName)s)"
+                                       %{
+                                           'propertyName': db.i18n.gettext(arg['group'][0][1]),
+                                           'trackerName' : db.config.TRACKER_NAME
+                                       } )
+        # chart.title ="Tickets grouped by %s \n(%s)" % (arg['group'][0][1],
         #                                                 db.config.TRACKER_NAME)
 
         headers = self.client.additional_headers
@@ -428,6 +434,9 @@ class BarChartAction(ChartingAction):
         if request.search_text:
             arg['search_text'] = request.search_text
 
+        if request.sort:
+            arg['sort'] = request.sort
+
         # execute the query again and count grouped items
         # data looks like list of (grouped_label, count):
         '''
@@ -441,6 +450,12 @@ class BarChartAction(ChartingAction):
 
         if not data:
             raise ValueError("Failed to obtain data for graph.")
+        
+        sort_param = arg.get('sort')
+        if '-' in sort_param[0]:
+            data.sort(key=lambda i: i[1], reverse=True)
+        else:
+            data.sort(key=lambda i: i[1])
 
         # build image here
 
@@ -489,9 +504,14 @@ class BarChartAction(ChartingAction):
         chart.nonce = self.client.client_nonce
         self.plot_data(data, arg, chart)
 
-        # WARN this will break if group is not list of tuples
-        chart.title = "Tickets grouped by %s \n(%s)" % (arg['group'][0][1],
-                                                        db.config.TRACKER_NAME)
+        # # WARN this will break if group is not list of tuples
+        # chart.title = "Tickets grouped by %s \n(%s)" % (arg['group'][0][1],
+        #                                                 db.config.TRACKER_NAME)
+        chart.title = db.i18n.gettext("Tickets grouped by %(propertyName)s \n(%(trackerName)s)"
+                                       %{
+                                           'propertyName': db.i18n.gettext(arg['group'][0][1]),
+                                           'trackerName' : db.config.TRACKER_NAME
+                                       } )
 
         headers = self.client.additional_headers
         headers['Content-Type'] = self.output_type
@@ -594,6 +614,7 @@ class StackedBarChartAction(ChartingAction):
                           print_values=True,
                           # make embedding easier
                           disable_xml_declaration=True,
+                          x_title=arg['group'][0][1]
                           )
         
         chart.nonce = self.client.client_nonce
@@ -601,6 +622,9 @@ class StackedBarChartAction(ChartingAction):
 
         # Give a title 
         chart.title = "Tickets grouped by Priority and Status"
+        
+        #Just testing
+        # chart.x_title = 'Priority testing'
 
         headers = self.client.additional_headers
         headers['Content-Type'] = self.output_type
