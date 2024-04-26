@@ -24,16 +24,20 @@
 <tal:block tal:condition="python:request.form.getvalue('@charttype').find(',') != -1">
 
 <div tal:attributes="class python:request.form.getvalue('@chart_class')">
-<div>
-  <embed type="image/svg+xml" 
+<tal:block tal:condition="python:request.form.getvalue('@group').find(',') == -1">
+  
+
+<embed type="image/svg+xml" 
 tal:attributes="src python:request.indexargs_url(request.classname,{'@action':request.form.getvalue('@charttype','barchart').split(',')[0]})"
 i18n:translate="" /> 
 
 <embed type="image/svg+xml" 
 tal:attributes="src python:request.indexargs_url(request.classname,{'@action':request.form.getvalue('@charttype','barchart').split(',')[1]})"
 i18n:translate="" /> 
-</div>
-<div>
+
+</tal:block>
+<tal:block tal:condition="python:request.form.getvalue('@group').find(',') != -1">
+
 <embed type="image/svg+xml" 
 tal:attributes="src python:request.indexargs_url(request.classname,{'@action':request.form.getvalue('@charttype','barchart').split(',')[2]})"
 i18n:translate="" /> 
@@ -41,9 +45,25 @@ i18n:translate="" />
 <embed type="image/svg+xml" 
 tal:attributes="src python:request.indexargs_url(request.classname,{'@action':request.form.getvalue('@charttype','barchart').split(',')[3]})"
 i18n:translate="" /> 
-</div>
+
+</tal:block>
 </div>
 </tal:block>
+<!-- http://localhost:8080/demo/issue?%40sort0=activity&%40sort1=&%40
+  group0=priority&%40group1=&%40columns=id%2Cactivity%2Ctitle%2Ccreator%2Cassignedto%2C
+  status&%40filter=status&status=-1%2C1%2C2%2C3%2C4%2C5%2C6%2C7&%40pagesize=50&%40startwith=0 -->
+
+<!-- 2 groups -->
+<!-- http://localhost:8080/demo/issue?@template=chart&
+  @charttype=piechart%2Cbarchart%2Cstackedchart%2Cmultibarchart&@chart_class=small-multiples&
+  @columns=id,activity,title,creator,assignedto,status&@sort=-activity&@group=priority,status&
+  @filter=status&@pagesize=50&@startwith=0&status=-1,1,2,3,4,5,6,7 -->
+<!-- 1 group -->
+<!-- http://localhost:8080/demo/issue?@template=chart&
+  @charttype=piechart%2Cbarchart%2Cstackedchart%2Cmultibarchart&@chart_class=small-multiples&
+  @columns=id,activity,title,creator,assignedto,status&@sort=-activity&@group=priority&
+  @filter=status&@pagesize=50&@startwith=0&status=-1,1,2,3,4,5,6,7 -->
+
 
 <tal:block tal:condition="python:request.form.getvalue('@charttype').find(',') == -1">
 

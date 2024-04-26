@@ -349,6 +349,9 @@ class PieChartAction(ChartingAction):
         if request.search_text:
             arg['search_text'] = request.search_text
 
+        if request.sort:
+            arg['sort'] = request.sort
+
         # execute the query again and count grouped items
         # data looks like list of (grouped_label, count):
         '''
@@ -363,8 +366,11 @@ class PieChartAction(ChartingAction):
         if not data:
             raise ValueError("Failed to obtain data for graph.")
 
-        # For Pie chart, sort by count. Largest first.
-        data.sort(key=lambda i: i[1], reverse=True)
+        sort_param = arg.get('sort')
+        if '-' in sort_param[0]:
+            data.sort(key=lambda i: i[1], reverse=True)
+        else:
+            data.sort(key=lambda i: i[1])
 
         # build image here
 
@@ -693,8 +699,14 @@ class HorizontalBarChartAction(ChartingAction):
         level_of_grouping = 1
         self.plot_data(data, arg, chart, level_of_grouping)
         # WARN this will break if group is not list of tuples
-        chart.title = "Tickets grouped by %s \n(%s)" % (arg['group'][0][1],
-                                                        db.config.TRACKER_NAME)
+        # chart.title = "Tickets grouped by %s \n(%s)" % (arg['group'][0][1],
+        #                                                 db.config.TRACKER_NAME)
+        
+        chart.title = db.i18n.gettext("Tickets grouped by %(propertyName)s \n(%(trackerName)s)"
+                                       %{
+                                           'propertyName': db.i18n.gettext(arg['group'][0][1]),
+                                           'trackerName' : db.config.TRACKER_NAME
+                                       } )
 
 
         headers = self.client.additional_headers
@@ -798,6 +810,7 @@ class StackedBarChartAction(ChartingAction):
                           print_values=False,
                           # make embedding easier
                           disable_xml_declaration=True,
+                          x_title=arg['group'][0][1]
                           )
         
         chart.nonce = self.client.client_nonce
@@ -805,8 +818,14 @@ class StackedBarChartAction(ChartingAction):
         self.plot_data(data, arg, chart, level_of_grouping)
 
         # Give a title 
-        chart.title = "Tickets grouped by %s and %s \n(%s)" % (arg['group'][0][1], arg['group'][1][1], db.config.TRACKER_NAME)
+        # chart.title = "Tickets grouped by %s and %s \n(%s)" % (arg['group'][0][1], arg['group'][1][1], db.config.TRACKER_NAME)
 
+        chart.title = db.i18n.gettext("Tickets grouped by %(propertyName1)s and %(propertyName2)s \n(%(trackerName)s)"
+                                       %{
+                                           'propertyName1': db.i18n.gettext(arg['group'][0][1]),
+                                           'propertyName2': db.i18n.gettext(arg['group'][1][1]),
+                                           'trackerName' : db.config.TRACKER_NAME
+                                       } )
         # Set labels for the x-axis
         chart.x_labels = list(data.keys())
 
@@ -923,14 +942,21 @@ class MultiBarChartAction(ChartingAction):
                           print_values=False,
                           # make embedding easier
                           disable_xml_declaration=True,
+                          x_title=arg['group'][0][1]
                           )
         
         chart.nonce = self.client.client_nonce
         level_of_grouping = 2
         self.plot_data(data, arg, chart, level_of_grouping)
         # Give a title 
-        chart.title = "Tickets grouped by %s and %s \n(%s)" % (arg['group'][0][1], arg['group'][1][1], db.config.TRACKER_NAME)
+        # chart.title = "Tickets grouped by %s and %s \n(%s)" % (arg['group'][0][1], arg['group'][1][1], db.config.TRACKER_NAME)
         
+        chart.title = db.i18n.gettext("Tickets grouped by %(propertyName1)s and %(propertyName2)s \n(%(trackerName)s)"
+                                       %{
+                                           'propertyName1': db.i18n.gettext(arg['group'][0][1]),
+                                           'propertyName2': db.i18n.gettext(arg['group'][1][1]),
+                                           'trackerName' : db.config.TRACKER_NAME
+                                       } )
 
         # Set labels for the x-axis
         chart.x_labels = list(data.keys())
