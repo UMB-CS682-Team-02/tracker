@@ -636,6 +636,9 @@ class HorizontalBarChartAction(ChartingAction):
         if request.search_text:
             arg['search_text'] = request.search_text
 
+        if request.sort:
+            arg['sort'] = request.sort
+
         # execute the query again and count grouped items
         # data looks like list of (grouped_label, count):
         '''
@@ -649,6 +652,12 @@ class HorizontalBarChartAction(ChartingAction):
 
         if not data:
             raise ValueError("Failed to obtain data for graph.")
+
+        sort_param = arg.get('sort')
+        if '-' in sort_param[0]:
+            data.sort(key=lambda i: i[1], reverse=True)
+        else:
+            data.sort(key=lambda i: i[1])
 
         # build image here
 
@@ -691,7 +700,7 @@ class HorizontalBarChartAction(ChartingAction):
                           print_values=True,
                           # make embedding easier
                           disable_xml_declaration=True,
-                          x_title=arg['group'][0][1]
+                          y_title=arg['group'][0][1]
                           )
 
 
