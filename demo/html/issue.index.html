@@ -124,7 +124,7 @@
     {'@template':'chart','@charttype':'multibarchart'})"  i18n:translate="">Show Multi Barchart</a> &nbsp;
 
 <a tal:attributes="href python:request.indexargs_url('issue',
-             {'@action':'horizontalbarchart'})"  i18n:translate="">Show Horizontal Barchart</a> &nbsp;
+    {'@template':'chart','@charttype':'horizontalbarchart'})"  i18n:translate="">Show Horizontal Barchart</a> &nbsp;
 
 <form method="GET" class="index-controls"
     tal:attributes="action request/classname">
