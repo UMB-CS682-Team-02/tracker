@@ -35,15 +35,19 @@ i18n:translate="" />
 tal:attributes="src python:request.indexargs_url(request.classname,{'@action':request.form.getvalue('@charttype','barchart').split(',')[1]})"
 i18n:translate="" /> 
 
-</tal:block>
-<tal:block tal:condition="python:request.form.getvalue('@group').find(',') != -1">
-
 <embed type="image/svg+xml" 
 tal:attributes="src python:request.indexargs_url(request.classname,{'@action':request.form.getvalue('@charttype','barchart').split(',')[2]})"
 i18n:translate="" /> 
 
+</tal:block>
+<tal:block tal:condition="python:request.form.getvalue('@group').find(',') != -1">
+
 <embed type="image/svg+xml" 
 tal:attributes="src python:request.indexargs_url(request.classname,{'@action':request.form.getvalue('@charttype','barchart').split(',')[3]})"
+i18n:translate="" /> 
+
+<embed type="image/svg+xml" 
+tal:attributes="src python:request.indexargs_url(request.classname,{'@action':request.form.getvalue('@charttype','barchart').split(',')[4]})"
 i18n:translate="" /> 
 
 </tal:block>
