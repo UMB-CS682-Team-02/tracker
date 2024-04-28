@@ -64,21 +64,20 @@ class ChartingAction(Action):
             except KeyError:
                 raise ValueError(
                     'Charts can only be created on '
-                    'linked group properties! %s is not '
-                    'a valid property\n' % first_group_propname)
+                    'Linked and Boolean group properties! %s is not '
+                    'either a Linked or Boolean property\n' % first_group_propname)
 
             # Check if the property type is a link or multilink
             if not isinstance(first_prop_type, hyperdb.Link) \
-            and not isinstance(first_prop_type, hyperdb.Multilink):
-                raise ValueError(
-                    'Charts can only be created on '
-                    'linked group properties! %s is not '
-                    'a linked property\n' % first_group_propname)
-                return
+                and not isinstance(first_prop_type, hyperdb.Multilink)\
+                    and not isinstance(first_prop_type, hyperdb.Boolean):
+                    raise ValueError(
+                        'Charts can only be created on '
+                        'Linked and Boolean group properties! %s is not '
+                        'either a Linked or Boolean property\n' % first_group_propname)
+                    return
 
-            # Get the class for the property type
-            klass = db.getclass(first_prop_type.classname)
-            log.append('klass=%s' % klass)
+            
 
             # Initialize property dictionary
             props = {}
@@ -93,30 +92,50 @@ class ChartingAction(Action):
             log.append('issues=%s' % issues)
 
             # Count occurrences of each property value
-            for nodeid in issues:
-                if not self.hasPermission('View', itemid=nodeid,
-                                        classname=cl.classname):
-                    continue
-                prop_ids = cl.get(nodeid, first_group_propname)
-                if prop_ids:
-                    if not isinstance(prop_ids, type([])):
-                        prop_ids = [prop_ids]
-                    for id in prop_ids:
-                        prop = klass.get(id, klass.labelprop())
+            if isinstance(first_prop_type, hyperdb.Boolean):
+                props = {'True': 0, 'False': 0, 'Not Set': 0}
+                for nodeid in issues:
+                    if not self.hasPermission('View', itemid=nodeid,
+                                          classname=cl.classname):
+                        continue
+                    prop_value = cl.get(nodeid, first_group_propname)
+                    if prop_value == 1:
+                        props['True'] += 1
+                    elif prop_value == 0:
+                        props['False'] += 1
+                    else:
+                        props['Not Set'] += 1
+            
+            else :
+                # Get the class for the property type
+                klass = db.getclass(first_prop_type.classname)
+                log.append('klass=%s' % klass)
+
+                for nodeid in issues:
+                    if not self.hasPermission('View', itemid=nodeid,
+                                            classname=cl.classname):
+                        continue
+                    prop_ids = cl.get(nodeid, first_group_propname)
+                    if prop_ids:
+                        if not isinstance(prop_ids, type([])):
+                            prop_ids = [prop_ids]
+                        for id in prop_ids:
+                            prop = klass.get(id, klass.labelprop())
+                            key = prop.replace('/', '-')
+                            if key in props:
+                                props[key] += 1
+                            else:
+                                props[key] = 1
+                    else:
+                        prop = 'Unassigned'
+                        if prop not in props:
+                            props[prop] = 0
                         key = prop.replace('/', '-')
                         if key in props:
                             props[key] += 1
                         else:
                             props[key] = 1
-                else:
-                    prop = 'Unassigned'
-                    if prop not in props:
-                        props[prop] = 0
-                    key = prop.replace('/', '-')
-                    if key in props:
-                        props[key] += 1
-                    else:
-                        props[key] = 1
+
             log.append('props=%s' % props)
 
             # Convert property dictionary to list of tuples
@@ -147,15 +166,16 @@ class ChartingAction(Action):
             except KeyError:
                 raise ValueError(
                     'Charts can only be created on '
-                    'linked group properties! %s is not '
-                    'a valid property\n' % first_group_propname)
+                    'Linked and Boolean group properties! %s is not '
+                    'either a Linked or Boolean property\n' % first_group_propname)
             
             if not isinstance(first_prop_type, hyperdb.Link) \
-            and not isinstance(first_prop_type, hyperdb.Multilink):
+            and not isinstance(first_prop_type, hyperdb.Multilink)\
+            and not isinstance(first_prop_type, hyperdb.Boolean):
                 raise ValueError(
                     'Charts can only be created on '
-                    'linked group properties! %s is not '
-                    'a linked property\n' % first_group_propname)
+                    'Linked and Boolean group properties! %s is not '
+                    'either a Linked or Boolean property\n' % first_group_propname)
                 return
 
             try:
@@ -163,15 +183,16 @@ class ChartingAction(Action):
             except KeyError:
                 raise ValueError(
                     'Charts can only be created on '
-                    'linked group properties! %s is not '
-                    'a valid property\n' % second_group_propname)
+                    'Linked and Boolean group properties! %s is not '
+                    'either a Linked or Boolean property\n' % second_group_propname)
 
             if not isinstance(second_prop_type, hyperdb.Link) \
-            and not isinstance(second_prop_type, hyperdb.Multilink):
+            and not isinstance(second_prop_type, hyperdb.Multilink)\
+            and not isinstance(second_prop_type, hyperdb.Boolean):
                 raise ValueError(
                     'Charts can only be created on '
-                    'linked group properties! %s is not '
-                    'a linked property\n' % second_group_propname)
+                    'Linked and Boolean group properties! %s is not '
+                    'either a Linked or Boolean property\n' % second_group_propname)
                 return
             
             # Iterate through issues and count occurrences of each property value combination
