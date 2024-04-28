@@ -182,23 +182,13 @@ class ChartingAction(Action):
             class1 = db.getclass(first_prop_type.classname)
             class2 = db.getclass(second_prop_type.classname)
 
-            # Some properties might not have assigned values yet. As grouping operations cannot be performed on null values,
-            # we need to handle these cases. We define a set of properties with no assigned values.
-            invalid_values = {'files', 'keyword', 'messages', 'nosy', 'superseder'}
-
-            # Iterate over both first_group_propname and second_group_propname to check for any invalid values.
-            for prop in (first_group_propname, second_group_propname):
-                # If the current property is in the set of invalid values, raise a ValueError.
-                if prop in invalid_values:
-                    raise ValueError(f"Invalid value found for {prop}: {prop}. It should not be in {invalid_values}")
-
             for nodeid in issues:
                 if not self.hasPermission('View', itemid=nodeid, classname=cl.classname):
                     continue
                 first_prop_id = cl.get(nodeid, group[0][1])  # Get the first property of the issue
                 second_prop_id = cl.get(nodeid, group[1][1])  # Get the second property of the issue
-                first_prop_value = class1.get(first_prop_id, key1)  # Get the name of the first property
-                second_prop_value = class2.get(second_prop_id, key2) # Get the name of the second property
+                first_prop_value = class1.get(first_prop_id, key1) if first_prop_id else "unset"  # Get the name of the first property
+                second_prop_value = class2.get(second_prop_id, key2) if second_prop_id else "unset" # Get the name of the second property
                 data[first_prop_value][second_prop_value] += 1  # Increment count for the specific first and second property
 
             # Convert defaultdict to standard dictionary
