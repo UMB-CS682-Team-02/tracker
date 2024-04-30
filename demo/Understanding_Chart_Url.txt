@@ -1,0 +1,48 @@
+In terms to understand how we can build the chart url from scratch, let us take the below URL as an
+example and break it down:
+
+http://localhost:8080/demo/query?@template=chart&@charttype=barchart&@group=creator
+
+http://localhost:8080/demo/ - Base URL - helps us to launch the demo tracker. When we run this URL,
+index page consisting list of issues will be launched.
+
+Next part will contain the class name (here in our example URL, class name is query) and 
+we have some more classes like issue and keyword.
+
+the left part of the ? - question mark will be the base url 
+the right part of the ? - will consist the parameters which can be used to generate chart for the 
+                          given class
+
+& - We use & to add multiple parameters
+
+@template=chart - the parameter here specifies the template which needs to be used for our 
+                  activities. In our case, we are trying to generate a chart. So 
+                  @template=chart will redirect our parameters to our charting template 
+                  (which is _generic.chart.html)
+
+@charttype=barchart - this is a newly added parameter by our team, which would help us on 
+                      giving the input of what type of chart we want to display.
+                      We have the following charttypes :
+                      1) Pie Chart(piechart)
+                      2) Bar Chart(barchart)
+                      3) Stacked Bar Chart(stackedchart)
+                      4) Multi Bar Chart(multibarchart)
+                      5) Horizontal Bar Chart(horizontalbarchart) 
+
+@group=creator - The group parameter specifies on what basis we want to group all the issues.
+                 In our current example URL, the list of Queries are being grouped by creator.
+
+                 We can use 2 grouping parameters for given list by specifying group0 and group1 in
+                 the URL.
+
+                 Something like @group0=creator&group=private_for
+
+NOTE : We can only use Stacked bar Chart and Multi Bar chart when we use multiple grouping 
+properties.
+
+Now we can generate URL's like :
+http://localhost:8080/demo/query?@template=chart&@charttype=stackedchart&@group0=creator&@group1=private_for
+
+http://localhost:8080/demo/issue?@template=chart&@charttype=piechart&@group=priority
+
+
