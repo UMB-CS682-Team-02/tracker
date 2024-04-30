@@ -243,20 +243,22 @@ class ChartingAction(Action):
         current_url = arg['request'].current_url()
         
         if len(arg['group']) == 1 and level_of_grouping == 1:
-            # For single-level grouping
-            grouping_prop_name = [arg['group'][0][1]]
-            # Generate a new @filter value adding the grouping_prop_name
-            new_filter = ','.join(current_filter + [grouping_prop_name[0]])
+            # get grouping property name
+            gprop = arg['group'][0][1]
+            # generate a new @filter value adding the gprop
+            filter = ','.join(current_filter + [gprop])
             for d in data:
                 # Generate xlink for each data point
                 xlink = {
                     'target': '_blank',
-                    'href': current_url + "&@filter=%(filter)s&%(gprop)s=%(gval)s" % {
-                        'filter': new_filter,
-                        'gprop': grouping_prop_name,
+                    'href': current_url + 
+                    "&@filter=%(filter)s&%(gprop)s=%(gval)s" % {
+                        'gprop': gprop,
                         'gval': d[0] if d[0] != "Unassigned" else -1,  # Handle "Unassigned" case
+                        'filter': filter,
                     }
                 }
+                # print(xlink)
                 # Add data point to chart with xlink
                 chart.add(d[0], [{'value': d[1], 'xlink': xlink}])
         
