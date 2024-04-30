@@ -67,7 +67,7 @@ class ChartingAction(Action):
                     'Linked and Boolean group properties! %s is not '
                     'either a Linked or Boolean property\n' % first_group_propname)
 
-            # Check if the property type is a link or multilink
+            # Check if the property type is a link, multilink or Boolean
             if not isinstance(first_prop_type, hyperdb.Link) \
                 and not isinstance(first_prop_type, hyperdb.Multilink)\
                     and not isinstance(first_prop_type, hyperdb.Boolean):
@@ -378,7 +378,7 @@ class PieChartAction(ChartingAction):
             raise ValueError("Failed to obtain data for graph.")
 
         sort_param = arg.get('sort')
-        if '-' in sort_param[0]:
+        if not 'None' and '-' in sort_param[0]:
             data.sort(key=lambda i: i[1], reverse=True)
         else:
             data.sort(key=lambda i: i[1])
@@ -526,7 +526,7 @@ class BarChartAction(ChartingAction):
             raise ValueError("Failed to obtain data for graph.")
         
         sort_param = arg.get('sort')
-        if '-' in sort_param[0]:
+        if not 'None' and '-' in sort_param[0]:
             data.sort(key=lambda i: i[1], reverse=True)
         else:
             data.sort(key=lambda i: i[1])
