@@ -297,7 +297,7 @@ class ChartingAction(Action):
             for d in data:
                 # Generate xlink for each data point
                 xlink = {
-                    'target': '_blank',
+                    'target': '_parent',
                     'href': current_url + 
                     "&@filter=%(filter)s&%(gprop)s=%(gval)s" % {
                         'gprop': gprop,
@@ -327,7 +327,7 @@ class ChartingAction(Action):
                 for first_prop, count in second_prop_counts.items():
                     # Generate link for the current second_prop and first_prop
                     xlink = {
-                        'target': '_blank',
+                        'target': '_parent',
                         'href': current_url + "&@filter=%(filter)s&%(first_prop)s=%(first_prop_val)s&%(second_prop)s=%(second_prop_val)s" % {
                             'filter': new_filter,
                             'first_prop': grouping_props[0],  # Assuming the property name for first_prop
