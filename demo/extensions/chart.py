@@ -283,7 +283,7 @@ class ChartingAction(Action):
             for d in data:
                 # Generate xlink for each data point
                 xlink = {
-                    'target': '_blank',
+                    'target': '_parent',
                     'href': current_url + 
                     "&@filter=%(filter)s&%(gprop)s=%(gval)s" % {
                         'gprop': gprop,
@@ -313,7 +313,7 @@ class ChartingAction(Action):
                 for first_prop, count in second_prop_counts.items():
                     # Generate link for the current second_prop and first_prop
                     xlink = {
-                        'target': '_blank',
+                        'target': '_parent',
                         'href': current_url + "&@filter=%(filter)s&%(first_prop)s=%(first_prop_val)s&%(second_prop)s=%(second_prop_val)s" % {
                             'filter': new_filter,
                             'first_prop': grouping_props[0],  # Assuming the property name for first_prop
@@ -413,7 +413,7 @@ class PieChartAction(ChartingAction):
             raise ValueError("Failed to obtain data for graph.")
 
         sort_param = arg.get('sort')
-        if not 'None' and '-' in sort_param[0]:
+        if sort_param is not None and '-' in sort_param[0]:
             data.sort(key=lambda i: i[1], reverse=True)
         else:
             data.sort(key=lambda i: i[1])
@@ -471,18 +471,12 @@ class PieChartAction(ChartingAction):
         self.plot_data(data, arg, chart, level_of_grouping)
 
         # WARN this will break if group is not list of tuples
-        # chart.title = db.i18n.gettext("Tickets grouped by %s \n(%s)" % (arg['group'][0][1],
-        #                                                 db.config.TRACKER_NAME))
-
-        # chart.title = db.i18n.gettext("Tickets grouped by %s \n(%s)" % (db.i18n.gettext(arg['group'][0][1]),
-        #                                                 db.config.TRACKER_NAME))
         chart.title = db.i18n.gettext("Tickets grouped by %(propertyName)s \n(%(trackerName)s)"
                                        %{
                                            'propertyName': db.i18n.gettext(arg['group'][0][1]),
                                            'trackerName' : db.config.TRACKER_NAME
                                        } )
-        # chart.title ="Tickets grouped by %s \n(%s)" % (arg['group'][0][1],
-        #                                                 db.config.TRACKER_NAME)
+        
 
         headers = self.client.additional_headers
         headers['Content-Type'] = self.output_type
@@ -561,7 +555,7 @@ class BarChartAction(ChartingAction):
             raise ValueError("Failed to obtain data for graph.")
         
         sort_param = arg.get('sort')
-        if not 'None' and '-' in sort_param[0]:
+        if sort_param is not None and '-' in sort_param[0]:
             data.sort(key=lambda i: i[1], reverse=True)
         else:
             data.sort(key=lambda i: i[1])
@@ -614,8 +608,6 @@ class BarChartAction(ChartingAction):
         self.plot_data(data, arg, chart, level_of_grouping)
 
         # # WARN this will break if group is not list of tuples
-        # chart.title = "Tickets grouped by %s \n(%s)" % (arg['group'][0][1],
-        #                                                 db.config.TRACKER_NAME)
         chart.title = db.i18n.gettext("Tickets grouped by %(propertyName)s \n(%(trackerName)s)"
                                        %{
                                            'propertyName': db.i18n.gettext(arg['group'][0][1]),
@@ -700,7 +692,7 @@ class HorizontalBarChartAction(ChartingAction):
             raise ValueError("Failed to obtain data for graph.")
 
         sort_param = arg.get('sort')
-        if '-' in sort_param[0]:
+        if sort_param is not None and '-' in sort_param[0]:
             data.sort(key=lambda i: i[1], reverse=True)
         else:
             data.sort(key=lambda i: i[1])
@@ -754,8 +746,6 @@ class HorizontalBarChartAction(ChartingAction):
         level_of_grouping = 1
         self.plot_data(data, arg, chart, level_of_grouping)
         # WARN this will break if group is not list of tuples
-        # chart.title = "Tickets grouped by %s \n(%s)" % (arg['group'][0][1],
-        #                                                 db.config.TRACKER_NAME)
         
         chart.title = db.i18n.gettext("Tickets grouped by %(propertyName)s \n(%(trackerName)s)"
                                        %{
@@ -873,7 +863,6 @@ class StackedBarChartAction(ChartingAction):
         self.plot_data(data, arg, chart, level_of_grouping)
 
         # Give a title 
-        # chart.title = "Tickets grouped by %s and %s \n(%s)" % (arg['group'][0][1], arg['group'][1][1], db.config.TRACKER_NAME)
 
         chart.title = db.i18n.gettext("Tickets grouped by %(propertyName1)s and %(propertyName2)s \n(%(trackerName)s)"
                                        %{
@@ -1004,7 +993,6 @@ class MultiBarChartAction(ChartingAction):
         level_of_grouping = 2
         self.plot_data(data, arg, chart, level_of_grouping)
         # Give a title 
-        # chart.title = "Tickets grouped by %s and %s \n(%s)" % (arg['group'][0][1], arg['group'][1][1], db.config.TRACKER_NAME)
         
         chart.title = db.i18n.gettext("Tickets grouped by %(propertyName1)s and %(propertyName2)s \n(%(trackerName)s)"
                                        %{
