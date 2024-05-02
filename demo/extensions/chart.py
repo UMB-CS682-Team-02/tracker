@@ -158,14 +158,11 @@ class ChartingAction(Action):
         else:
             data = defaultdict(lambda: defaultdict(int))  # Initialize defaultdict for storing data
             first_group_propname = group[0][1]
-            log.append('first_group_propname=%s' % first_group_propname)
             second_group_propname = group[1][1]
-            log.append('second_group_propname=%s' % second_group_propname)
 
             # Get the property types for the two group properties
             try:
                 first_prop_type = cl.getprops()[first_group_propname]
-                log.append('first_prop_type=%s' % first_prop_type)
             except KeyError:
                 raise ValueError(
                     'Charts can only be created on '
@@ -183,7 +180,6 @@ class ChartingAction(Action):
 
             try:
                 second_prop_type = cl.getprops()[second_group_propname]
-                log.append('second_prop_type=%s' % second_prop_type)
             except KeyError:
                 raise ValueError(
                     'Charts can only be created on '
@@ -198,26 +194,16 @@ class ChartingAction(Action):
                     'Linked and Boolean group properties! %s is not '
                     'either a Linked or Boolean property\n' % second_group_propname)
                 return
-            
-            # Initialize property dictionary
-            props = {}
-
-            if not filterspec:
-                filterspec = {}
 
             # Iterate through issues and count occurrences of each property value combination
             issues = cl.filter(matches, filterspec, sort=[('+', 'id')], 
                                group=group)
             
-            log.append('issues=%s' % issues)
-
             # set the key value and class name based on the property type
             key1 = db.getclass(first_prop_type.classname).getkey()
             key2 = db.getclass(second_prop_type.classname).getkey()
             class1 = db.getclass(first_prop_type.classname)
-            log.append('class1=%s' % class1)
             class2 = db.getclass(second_prop_type.classname)
-            log.append('class2=%s' % class2)
 
             for nodeid in issues:
                 if not self.hasPermission('View', itemid=nodeid, classname=cl.classname):
