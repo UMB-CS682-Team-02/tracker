@@ -1,31 +1,30 @@
-To add charting functionality to a new template named `issue.chart.html` based on the provided points, follow these directions:
+To implement charting functionality into the issue.chart.html template, we'll follow the provided directions step by step:
 
-1. **create aTemplate**:
-   - Create a template and name it `issue.chart.html`. 
+### 1. Create a Template:
+   - Create a new HTML file named issue.chart.html.
+      copy html/user.item.html to html/issue.chart.html you want to replace the code between the content slot definition:
+         `<td class="content" metal:fill-slot="content">
+         and the closing <td> element (which is just before the closing
+         </tal:doc>)
 
-2. **Interactive SVG Demo Using Roundup Display.**:
-   - use Roundup to display that file.ng So the url to
-     display your svg example page should be:
+### 2. Invoke the chart Template:
+      Invoke the chart template using
+   [http://.../demo/index?@template=chart] http://.../demo/index?@template=chart.
 
-     http://localhost:8917/demo/issue?@template=chart
+   - The URL to display the SVG example page should be http://localhost:8917/demo/issue?@template=chart.
+   
 
-3. **Change URL**:
-   - Replace the URL `@action:piechart/barchart` in `issue.index.html` with `@template:chart` to load the template HTML for viewing charts.
+### 3. Change URL:
+   - Replace the URL @action:piechart/barchart in issue.index.html with @template:chart,'@charttype':'piechart/barchart' to load the template HTML for viewing charts.
 
-4. **Create Template with Icing Mechanism**:
-   - Implement `issue.chart.html` as a template using the icing mechanism to incorporate all necessary links and SVG elements for charting.
-   - Ensure that the necessary libraries for charting (e.g., D3.js, Chart.js) are included in the template.
+### 4. Create Template with Icing Mechanism:
+   - Implement issue.chart.html using the icing mechanism to incorporate necessary links and SVG elements for charting.
 
-5. **Dynamically Render Charts Based on Grouping**:
-   - Utilize JavaScript or a server-side language (if applicable) to dynamically render charts based on the grouping.
-   - Determine the data source for the charts (e.g., database, API response).
-   - Group the data as required for charting purposes (e.g., by category, date, status).
-   - Use appropriate charting libraries to generate pie charts, bar charts, or any other desired chart types.
-   - Ensure that the charts are responsive and interactive, allowing users to explore and analyze data effectively.
+### 5. Dynamically Render Charts Based on Grouping:
+   - Utilize python language for dynamic chart rendering.
+   - Determine the data source for charts (database).
+   - Group data as required (by category, activity, status..).
+   - Use appropriate charting libraries for desired chart types (pie charts, bar charts).
+   - Ensure charts are responsive and interactive for effective data analysis.
 
-
-6. **Documentation**:
-   - Document the changes made to `issue.chart.html`, including any modifications to the HTML structure, JavaScript code, and charting configurations.
-   - Provide instructions for users on how to access and utilize the charting functionality within the template.
-
-By following these directions, you should be able to successfully add charting capabilities to the new template `issue.chart.html` as per your requirements.
+By following these steps and providing thorough documentation, users will be able to effectively utilize the charting capabilities integrated into the issue.chart.html template.
