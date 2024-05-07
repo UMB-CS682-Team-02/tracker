@@ -75,7 +75,8 @@ issue = IssueClass(db, "issue",
                 assignedto=Link("user"),
                 keyword=Multilink("keyword"),
                 priority=Link("priority"),
-                status=Link("status"))
+                status=Link("status"),
+                private=Boolean())
 
 #
 # TRACKER SECURITY SETTINGS
