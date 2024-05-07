@@ -958,7 +958,7 @@ class MultiBarChartAction(ChartingAction):
         # make plot title larger and wrap lines
         config.css.append('''inline:
           g.titles text.plot_title {
-            font-size: 20px !important;
+            font-size: 18px !important;
             white-space: pre-line;
           }''')
         config.css.append('''inline:
@@ -994,7 +994,7 @@ class MultiBarChartAction(ChartingAction):
         self.plot_data(data, arg, chart, level_of_grouping)
         # Give a title 
         
-        chart.title = db.i18n.gettext("Multi barchart of Tickets grouped by %(propertyName1)s and %(propertyName2)s \n(%(trackerName)s)"
+        chart.title = db.i18n.gettext("Tickets grouped by %(propertyName1)s and %(propertyName2)s \n(%(trackerName)s)"
                                        %{
                                            'propertyName1': db.i18n.gettext(arg['group'][0][1]),
                                            'propertyName2': db.i18n.gettext(arg['group'][1][1]),
