@@ -451,6 +451,7 @@ class PieChartAction(ChartingAction):
 
         cstyle = pygal.style.Style(background='transparent',
                                    plot_background='transparent')
+                                   
 
         if self.jsURL:
             config.js[0] = self.jsURL
@@ -587,7 +588,7 @@ class BarChartAction(ChartingAction):
             fill: #fff !important;
           }''')
 
-        pygal.style.Style(background='transparent',
+        cstyle_barchart= pygal.style.Style(background='transparent',
                           plot_background='transparent')
 
         if self.jsURL:
@@ -598,6 +599,7 @@ class BarChartAction(ChartingAction):
         chart = pygal.Bar(config,
                           width=400,
                           height=400,
+                          style = cstyle_barchart,
                           print_values=True,
                           # make embedding easier
                           disable_xml_declaration=True,
@@ -724,7 +726,7 @@ class HorizontalBarChartAction(ChartingAction):
             fill: #fff !important;
           }''')
 
-        pygal.style.Style(background='transparent',
+        cstyle_barchart=pygal.style.Style(background='transparent',
                           plot_background='transparent')
 
         if self.jsURL:
@@ -736,6 +738,7 @@ class HorizontalBarChartAction(ChartingAction):
                           width=400,
                           height=400,
                           print_values=True,
+                          style = cstyle_barchart,
                           # make embedding easier
                           disable_xml_declaration=True,
                           y_title=arg['group'][0][1]
@@ -841,7 +844,7 @@ class StackedBarChartAction(ChartingAction):
             fill: #fff !important;
           }''')
         
-        pygal.style.Style(background='transparent',
+        cstyle_barchart=pygal.style.Style(background='transparent',
                           plot_background='transparent')
 
         if self.jsURL:
@@ -852,6 +855,7 @@ class StackedBarChartAction(ChartingAction):
         chart = pygal.StackedBar(config,
                           width=400,
                           height=400,
+                          style = cstyle_barchart,
                           print_values=False,
                           # make embedding easier
                           disable_xml_declaration=True,
@@ -972,7 +976,7 @@ class MultiBarChartAction(ChartingAction):
             fill: #fff !important;
           }''')
         
-        pygal.style.Style(background='transparent',
+        cstyle_barchart=pygal.style.Style(background='transparent',
                           plot_background='transparent')
 
         if self.jsURL:
@@ -983,6 +987,7 @@ class MultiBarChartAction(ChartingAction):
         chart = pygal.Bar(config,
                           width=500,
                           height=400,
+                          style = cstyle_barchart,
                           print_values=False,
                           # make embedding easier
                           disable_xml_declaration=True,
