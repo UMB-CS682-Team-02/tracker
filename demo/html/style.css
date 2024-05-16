@@ -448,3 +448,6 @@ textarea:focus, select:focus {
 /* vim: sts=2 sw=2 et
 */
 /* SHA: 1f0737b27ab5377b8321fda618cb56f69521063f */
+g.titles text.plot_title {
+    font-size: 18px !important;
+    white-space: pre-line;

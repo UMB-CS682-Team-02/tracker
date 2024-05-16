@@ -24,13 +24,26 @@ class ChartingAction(Action):
     jsURL = None
     # jsURL = "https://kozea.github.io/pygal.js/2.0.x/pygal-tooltips.js"
     # uncomment and set to url for local copy of pygal-tooltips.js
-    jsURL = "https://rouilj.dynamic-dns.net/sysadmin/@@file/jslibraries/pygal-tooltips.js"
+    # jsURL = "https://rouilj.dynamic-dns.net/sysadmin/@@file/jslibraries/pygal-tooltips.js"
 
     # set output image type. svg and data: are interactive
     output_type = "image/svg+xml"  # @image_type: image/svg+xml, image/png, data:
 
     # image is to be embedded in a rendered html page rather than stand alone.
     embedded = False  # @embedded: 0, 1
+
+    def set_jsURL(self):
+               # original source_url:
+      #  "https://kozea.github.io/pygal.js/2.0.x/pygal-tooltips.js"
+       # Use our local copy of pygal-tooltips.js
+       try:
+           relative_jsURL = self.db.config.ext['CHART_JSURL']
+        except KeyError:
+            relative_jsURL = "pygal-tooltips.js"
+
+       if relative_jsURL:
+            self.jsURL = "%s@@file/%s" % (self.db.config['TRACKER_WEB'],
+                                          relative_jsURL)
 
     def get_data_from_query(self, db, classname=None, filterspec=None,
                             group=None, search_text=None, **other):
@@ -350,6 +363,7 @@ class PieChartAction(ChartingAction):
     def handle(self):
         ''' Show chart for current query results
         '''
+        self.set_jsURL()
         db = self.db
 
         # 'arg' will contain all the data that we need to pass to
@@ -493,6 +507,7 @@ class BarChartAction(ChartingAction):
     def handle(self):
         ''' Show chart for current query results
         '''
+        self.set_jsURL()
         db = self.db
 
         # 'arg' will contain all the data that we need to pass to
@@ -631,6 +646,7 @@ class HorizontalBarChartAction(ChartingAction):
     def handle(self):
         ''' Show chart for current query results
         '''
+        self.set_jsURL()
         db = self.db
 
         # 'arg' will contain all the data that we need to pass to
@@ -760,6 +776,7 @@ class StackedBarChartAction(ChartingAction):
     def handle(self):
         ''' Show chart for current query results
         '''
+        self.set_jsURL()
         db = self.db
 
         # 'arg' will contain all the data that we need to pass to
@@ -892,6 +909,7 @@ class MultiBarChartAction(ChartingAction):
     def handle(self):
         ''' Show chart for current query results
         '''
+        self.set_jsURL()
         db = self.db
 
         # 'arg' will contain all the data that we need to pass to
@@ -944,7 +962,7 @@ class MultiBarChartAction(ChartingAction):
         # make plot title larger and wrap lines
         config.css.append('''inline:
           g.titles text.plot_title {
-            font-size: 20px !important;
+            font-size: 18px !important;
             white-space: pre-line;
           }''')
         config.css.append('''inline:
