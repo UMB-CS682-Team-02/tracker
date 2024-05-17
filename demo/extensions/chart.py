@@ -24,13 +24,26 @@ class ChartingAction(Action):
     jsURL = None
     # jsURL = "https://kozea.github.io/pygal.js/2.0.x/pygal-tooltips.js"
     # uncomment and set to url for local copy of pygal-tooltips.js
-    jsURL = "https://rouilj.dynamic-dns.net/sysadmin/@@file/jslibraries/pygal-tooltips.js"
+    # jsURL = "https://rouilj.dynamic-dns.net/sysadmin/@@file/jslibraries/pygal-tooltips.js"
 
     # set output image type. svg and data: are interactive
     output_type = "image/svg+xml"  # @image_type: image/svg+xml, image/png, data:
 
     # image is to be embedded in a rendered html page rather than stand alone.
     embedded = False  # @embedded: 0, 1
+
+    def set_jsURL(self):
+               # original source_url:
+      #  "https://kozea.github.io/pygal.js/2.0.x/pygal-tooltips.js"
+       # Use our local copy of pygal-tooltips.js
+       try:
+           relative_jsURL = self.db.config.ext['CHART_JSURL']
+        except KeyError:
+            relative_jsURL = "pygal-tooltips.js"
+
+       if relative_jsURL:
+            self.jsURL = "%s@@file/%s" % (self.db.config['TRACKER_WEB'],
+                                          relative_jsURL)
 
     def get_data_from_query(self, db, classname=None, filterspec=None,
                             group=None, search_text=None, **other):
@@ -64,17 +77,16 @@ class ChartingAction(Action):
             except KeyError:
                 raise ValueError(
                     'Charts can only be created on '
-                    'Linked and Boolean group properties! %s is not '
-                    'either a Linked or Boolean property\n' % first_group_propname)
+                    'Linked properties!\n %s is not '
+                    'a Linked property\n' % first_group_propname)
 
             # Check if the property type is a link, multilink or Boolean
             if not isinstance(first_prop_type, hyperdb.Link) \
-                and not isinstance(first_prop_type, hyperdb.Multilink)\
-                    and not isinstance(first_prop_type, hyperdb.Boolean):
+                and not isinstance(first_prop_type, hyperdb.Multilink):
                     raise ValueError(
                         'Charts can only be created on '
-                        'Linked and Boolean group properties! %s is not '
-                        'either a Linked or Boolean property\n' % first_group_propname)
+                        'Linked properties!\n %s is not '
+                        'a Linked property\n' % first_group_propname)
                     return
 
             
@@ -92,49 +104,34 @@ class ChartingAction(Action):
             log.append('issues=%s' % issues)
 
             # Count occurrences of each property value
-            if isinstance(first_prop_type, hyperdb.Boolean):
-                props = {'True': 0, 'False': 0, 'Not Set': 0}
-                for nodeid in issues:
-                    if not self.hasPermission('View', itemid=nodeid,
-                                          classname=cl.classname):
-                        continue
-                    prop_value = cl.get(nodeid, first_group_propname)
-                    if prop_value == 1:
-                        props['True'] += 1
-                    elif prop_value == 0:
-                        props['False'] += 1
-                    else:
-                        props['Not Set'] += 1
-            
-            else :
-                # Get the class for the property type
-                klass = db.getclass(first_prop_type.classname)
-                log.append('klass=%s' % klass)
+            # Get the class for the property type
+            klass = db.getclass(first_prop_type.classname)
+            log.append('klass=%s' % klass)
 
-                for nodeid in issues:
-                    if not self.hasPermission('View', itemid=nodeid,
-                                            classname=cl.classname):
-                        continue
-                    prop_ids = cl.get(nodeid, first_group_propname)
-                    if prop_ids:
-                        if not isinstance(prop_ids, type([])):
-                            prop_ids = [prop_ids]
-                        for id in prop_ids:
-                            prop = klass.get(id, klass.labelprop())
-                            key = prop.replace('/', '-')
-                            if key in props:
-                                props[key] += 1
-                            else:
-                                props[key] = 1
-                    else:
-                        prop = 'Unassigned'
-                        if prop not in props:
-                            props[prop] = 0
+            for nodeid in issues:
+                if not self.hasPermission('View', itemid=nodeid,
+                                        classname=cl.classname):
+                    continue
+                prop_ids = cl.get(nodeid, first_group_propname)
+                if prop_ids:
+                    if not isinstance(prop_ids, type([])):
+                        prop_ids = [prop_ids]
+                    for id in prop_ids:
+                        prop = klass.get(id, klass.labelprop())
                         key = prop.replace('/', '-')
                         if key in props:
                             props[key] += 1
                         else:
                             props[key] = 1
+                else:
+                    prop = 'Unassigned'
+                    if prop not in props:
+                        props[prop] = 0
+                    key = prop.replace('/', '-')
+                    if key in props:
+                        props[key] += 1
+                    else:
+                        props[key] = 1
 
             log.append('props=%s' % props)
 
@@ -166,16 +163,15 @@ class ChartingAction(Action):
             except KeyError:
                 raise ValueError(
                     'Charts can only be created on '
-                    'Linked and Boolean group properties! %s is not '
-                    'either a Linked or Boolean property\n' % first_group_propname)
+                    'Linked properties!\n %s is not '
+                    'a Linked property\n' % first_group_propname)
             
             if not isinstance(first_prop_type, hyperdb.Link) \
-            and not isinstance(first_prop_type, hyperdb.Multilink)\
-            and not isinstance(first_prop_type, hyperdb.Boolean):
+            and not isinstance(first_prop_type, hyperdb.Multilink):
                 raise ValueError(
                     'Charts can only be created on '
-                    'Linked and Boolean group properties! %s is not '
-                    'either a Linked or Boolean property\n' % first_group_propname)
+                    'Linked properties!\n %s is not '
+                    'a Linked property\n' % first_group_propname)
                 return
 
             try:
@@ -183,16 +179,15 @@ class ChartingAction(Action):
             except KeyError:
                 raise ValueError(
                     'Charts can only be created on '
-                    'Linked and Boolean group properties! %s is not '
-                    'either a Linked or Boolean property\n' % second_group_propname)
+                    'Linked properties!\n %s is not '
+                    'a Linked property\n' % second_group_propname)
 
             if not isinstance(second_prop_type, hyperdb.Link) \
-            and not isinstance(second_prop_type, hyperdb.Multilink)\
-            and not isinstance(second_prop_type, hyperdb.Boolean):
+            and not isinstance(second_prop_type, hyperdb.Multilink):
                 raise ValueError(
                     'Charts can only be created on '
-                    'Linked and Boolean group properties! %s is not '
-                    'either a Linked or Boolean property\n' % second_group_propname)
+                    'Linked properties!\n %s is not '
+                    'a Linked property\n' % second_group_propname)
                 return
 
             # Iterate through issues and count occurrences of each property value combination
@@ -368,6 +363,7 @@ class PieChartAction(ChartingAction):
     def handle(self):
         ''' Show chart for current query results
         '''
+        self.set_jsURL()
         db = self.db
 
         # 'arg' will contain all the data that we need to pass to
@@ -451,6 +447,7 @@ class PieChartAction(ChartingAction):
 
         cstyle = pygal.style.Style(background='transparent',
                                    plot_background='transparent')
+                                   
 
         if self.jsURL:
             config.js[0] = self.jsURL
@@ -510,6 +507,7 @@ class BarChartAction(ChartingAction):
     def handle(self):
         ''' Show chart for current query results
         '''
+        self.set_jsURL()
         db = self.db
 
         # 'arg' will contain all the data that we need to pass to
@@ -587,7 +585,7 @@ class BarChartAction(ChartingAction):
             fill: #fff !important;
           }''')
 
-        pygal.style.Style(background='transparent',
+        cstyle_barchart= pygal.style.Style(background='transparent',
                           plot_background='transparent')
 
         if self.jsURL:
@@ -598,6 +596,7 @@ class BarChartAction(ChartingAction):
         chart = pygal.Bar(config,
                           width=400,
                           height=400,
+                          style = cstyle_barchart,
                           print_values=True,
                           # make embedding easier
                           disable_xml_declaration=True,
@@ -647,6 +646,7 @@ class HorizontalBarChartAction(ChartingAction):
     def handle(self):
         ''' Show chart for current query results
         '''
+        self.set_jsURL()
         db = self.db
 
         # 'arg' will contain all the data that we need to pass to
@@ -724,7 +724,7 @@ class HorizontalBarChartAction(ChartingAction):
             fill: #fff !important;
           }''')
 
-        pygal.style.Style(background='transparent',
+        cstyle_barchart=pygal.style.Style(background='transparent',
                           plot_background='transparent')
 
         if self.jsURL:
@@ -736,6 +736,7 @@ class HorizontalBarChartAction(ChartingAction):
                           width=400,
                           height=400,
                           print_values=True,
+                          style = cstyle_barchart,
                           # make embedding easier
                           disable_xml_declaration=True,
                           y_title=arg['group'][0][1]
@@ -775,6 +776,7 @@ class StackedBarChartAction(ChartingAction):
     def handle(self):
         ''' Show chart for current query results
         '''
+        self.set_jsURL()
         db = self.db
 
         # 'arg' will contain all the data that we need to pass to
@@ -841,7 +843,7 @@ class StackedBarChartAction(ChartingAction):
             fill: #fff !important;
           }''')
         
-        pygal.style.Style(background='transparent',
+        cstyle_barchart=pygal.style.Style(background='transparent',
                           plot_background='transparent')
 
         if self.jsURL:
@@ -852,6 +854,7 @@ class StackedBarChartAction(ChartingAction):
         chart = pygal.StackedBar(config,
                           width=400,
                           height=400,
+                          style = cstyle_barchart,
                           print_values=False,
                           # make embedding easier
                           disable_xml_declaration=True,
@@ -906,6 +909,7 @@ class MultiBarChartAction(ChartingAction):
     def handle(self):
         ''' Show chart for current query results
         '''
+        self.set_jsURL()
         db = self.db
 
         # 'arg' will contain all the data that we need to pass to
@@ -958,7 +962,7 @@ class MultiBarChartAction(ChartingAction):
         # make plot title larger and wrap lines
         config.css.append('''inline:
           g.titles text.plot_title {
-            font-size: 20px !important;
+            font-size: 18px !important;
             white-space: pre-line;
           }''')
         config.css.append('''inline:
@@ -972,7 +976,7 @@ class MultiBarChartAction(ChartingAction):
             fill: #fff !important;
           }''')
         
-        pygal.style.Style(background='transparent',
+        cstyle_barchart=pygal.style.Style(background='transparent',
                           plot_background='transparent')
 
         if self.jsURL:
@@ -983,6 +987,7 @@ class MultiBarChartAction(ChartingAction):
         chart = pygal.Bar(config,
                           width=500,
                           height=400,
+                          style = cstyle_barchart,
                           print_values=False,
                           # make embedding easier
                           disable_xml_declaration=True,
