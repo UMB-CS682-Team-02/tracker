@@ -38,7 +38,7 @@ class ChartingAction(Action):
        # Use our local copy of pygal-tooltips.js
        try:
            relative_jsURL = self.db.config.ext['CHART_JSURL']
-        except KeyError:
+       except KeyError:
             relative_jsURL = "pygal-tooltips.js"
 
        if relative_jsURL:
